@@ -1,0 +1,12 @@
+{
+  "properties": [
+    {
+      "name": "otdl.file.uploadedFilesDirectory",
+      "defaultValue": "files"
+    },
+    {
+      "name": "otdl.security.keyLength",
+      "defaultValue": 160
+    }
+  ]
+}
