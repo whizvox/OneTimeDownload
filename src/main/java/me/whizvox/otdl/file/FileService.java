@@ -1,6 +1,8 @@
 package me.whizvox.otdl.file;
 
 import me.whizvox.otdl.exception.FileMismatchException;
+import me.whizvox.otdl.exception.InvalidLifespanException;
+import me.whizvox.otdl.exception.NoFileException;
 import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.ComboAuthToken;
 import me.whizvox.otdl.security.SecurityService;
@@ -81,13 +83,17 @@ public class FileService {
   /**
    * Upload a file, then encrypt it.
    * @param file The file to be uploaded
+   * @param lifespan How long the file will be kept in the file system in minutes
    * @param password The password used to encrypt the file
    * @return An {@link FileInfo} instance
    * @throws IOException Writing to the output file is unsuccessful in some way
    */
-  public FileInfo upload(MultipartFile file, char[] password) throws IOException {
+  public FileInfo upload(MultipartFile file, int lifespan, char[] password) throws IOException {
     if (file == null) {
-      throw new NullPointerException("file must be defined");
+      throw new NoFileException();
+    }
+    if (lifespan < 1 || lifespan > config.getMaxLifespanMember()) {
+      throw new InvalidLifespanException(lifespan);
     }
     String id = generateId();
     Path path = rootDir.resolve(id);
@@ -117,6 +123,7 @@ public class FileService {
     info.setSha1(HexFormat.of().formatHex(sha1.digest()));
     info.setAuthToken(security.getAuthTokenCodec().encodeToString(security.generateAuthToken(password, salt)));
     info.setUploaded(LocalDateTime.now());
+    info.setLifespan(lifespan);
     repo.save(info);
     return info;
   }
@@ -149,18 +156,10 @@ public class FileService {
   /**
    * Deletes a specified file.
    * @param id The ID of the file to delete
-   * @param password The password needed to decrypt the file
    * @throws IOException Could not delete the file from the file system
-   * @throws WrongPasswordException The supplied password is not correct
    */
-  public void delete(String id, char[] password) throws IOException {
-    Optional<FileInfo> infoOp = getInfo(id);
-    if (infoOp.isPresent()) {
-      FileInfo info = infoOp.get();
-      ComboAuthToken token = security.getAuthTokenCodec().decode(info.getAuthToken());
-      if (!token.authorize(security.generateSecret(password, token.getSalt()).getEncoded())) {
-        throw new WrongPasswordException();
-      }
+  public void delete(String id) throws IOException {
+    if (repo.existsById(id)) {
       Path filePath = rootDir.resolve(id);
       repo.deleteById(id);
       Files.deleteIfExists(filePath);

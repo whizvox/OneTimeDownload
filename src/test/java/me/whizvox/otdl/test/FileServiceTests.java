@@ -1,6 +1,8 @@
 package me.whizvox.otdl.test;
 
 import me.whizvox.otdl.exception.FileMismatchException;
+import me.whizvox.otdl.exception.InvalidLifespanException;
+import me.whizvox.otdl.exception.NoFileException;
 import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.file.FileConfiguration;
 import me.whizvox.otdl.file.FileInfo;
@@ -29,12 +31,16 @@ public class FileServiceTests {
 
   private final FileRepository repo;
   private final FileService files;
+
+  private final int maxLifespan;
   private final Path rootDir;
 
   @Autowired
   public FileServiceTests(FileConfiguration config, FileRepository repo, FileService files) throws Exception {
     this.repo = repo;
     this.files = files;
+
+    maxLifespan = config.getMaxLifespanMember();
     rootDir = Paths.get(config.getUploadedFilesDirectory()).normalize().toAbsolutePath();
 
     //files.upload(new MockMultipartFile("test.txt", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.".getBytes(StandardCharsets.UTF_8)), "password123".toCharArray());
@@ -64,6 +70,7 @@ public class FileServiceTests {
     info.setMd5("db89bb5ceab87f9c0fcc2ab36c189c2c");
     info.setSha1("cd36b370758a259b34845084a6cc38473cb95e27");
     info.setUploaded(LocalDateTime.of(2022, 2, 19, 12, 0, 0));
+    info.setLifespan(60);
     info.setAuthToken("e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65");
     repo.save(info);
     try (InputStream in = FileServiceTests.class.getClassLoader().getResourceAsStream("test/R1DZ4vpu966g")) {
@@ -119,12 +126,13 @@ public class FileServiceTests {
     assertEquals("cd36b370758a259b34845084a6cc38473cb95e27", info.getSha1());
     assertEquals("e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65", info.getAuthToken());
     assertEquals(LocalDateTime.of(2022, 2, 19, 12, 0, 0), info.getUploaded());
+    assertEquals(60, info.getLifespan());
   }
 
   @Test
   void upload_givenGoodInput_thenSuccess() {
     assertDoesNotThrow(() -> {
-      FileInfo info = files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), "password123".toCharArray());
+      FileInfo info = files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 60, "password123".toCharArray());
       assertEquals("f3cf3af6d97fa0040dafc8963d8f2c47", info.getMd5());
       assertEquals("ebc29fb09abaddf38513475fae93dc10e1be8afa", info.getSha1());
       assertEquals(17, info.getOriginalSize());
@@ -136,17 +144,42 @@ public class FileServiceTests {
 
   @Test
   void upload_givenZeroLengthPassword_thenSuccess() {
-    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), new char[0]));
+    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 60, new char[0]));
   }
 
   @Test
   void upload_givenZeroLengthFile_thenSuccess() {
-    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", new byte[0]), "password123".toCharArray()));
+    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", new byte[0]), 60, "password123".toCharArray()));
   }
 
   @Test
   void upload_givenNoFile_thenThrow() {
-    assertThrows(NullPointerException.class, () -> files.upload(null, "password123".toCharArray()));
+    assertThrows(NoFileException.class, () -> files.upload(null, 60, "password123".toCharArray()));
+  }
+
+  @Test
+  void upload_givenMinLifespan_thenSuccess() {
+    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 1, "password123".toCharArray()));
+  }
+
+  @Test
+  void upload_givenZeroLifespan_thenThrow() {
+    assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 0, "password123".toCharArray()));
+  }
+
+  @Test
+  void upload_givenNegativeLifespan_thenThrow() {
+    assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), -1, "password123".toCharArray()));
+  }
+
+  @Test
+  void upload_givenMaxLifespan_thenSuccess() {
+    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), maxLifespan, "password123".toCharArray()));
+  }
+
+  @Test
+  void upload_givenOverMaxLifespan_thenSuccess() {
+    assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), maxLifespan + 1, "password123".toCharArray()));
   }
 
   @Test
@@ -174,7 +207,7 @@ public class FileServiceTests {
 
   @Test
   void delete_givenExistingFile_thenSuccess() {
-    assertDoesNotThrow(() -> files.delete("R1DZ4vpu966g", "password123".toCharArray()));
+    assertDoesNotThrow(() -> files.delete("R1DZ4vpu966g"));
     assertFalse(files.getInfo("R1DZ4vpu966g").isPresent());
   }
 

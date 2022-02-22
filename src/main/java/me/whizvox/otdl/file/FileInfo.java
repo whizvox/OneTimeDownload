@@ -32,4 +32,7 @@ public class FileInfo {
   @Getter @Setter
   private long storedSize;
 
+  @Getter @Setter
+  private int lifespan;
+
 }

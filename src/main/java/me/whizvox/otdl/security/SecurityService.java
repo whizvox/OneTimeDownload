@@ -17,4 +17,9 @@ public interface SecurityService {
     return new ComboAuthToken(generateSecret(password, salt).getEncoded(), salt);
   }
 
+  default boolean authenticate(String authTokenStr, char[] password) {
+    ComboAuthToken token = getAuthTokenCodec().decode(authTokenStr);
+    return token.authorize(generateSecret(password, token.getSalt()).getEncoded());
+  }
+
 }

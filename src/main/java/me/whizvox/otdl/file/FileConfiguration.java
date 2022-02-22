@@ -10,4 +10,10 @@ public class FileConfiguration {
   @Getter @Setter
   private String uploadedFilesDirectory = "files";
 
+  @Getter @Setter
+  private int maxLifespanAnonymous = 60;
+
+  @Getter @Setter
+  private int maxLifespanMember = 1440;
+
 }
