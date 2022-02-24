@@ -5,6 +5,8 @@ import me.whizvox.otdl.exception.NoFileException;
 import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.SecurityService;
 import me.whizvox.otdl.util.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -26,13 +28,17 @@ import java.util.Optional;
 @RequestMapping("files")
 public class FileController {
 
+  private static final Logger LOG = LoggerFactory.getLogger(FileController.class);
+
   private FileService files;
   private SecurityService security;
+  private final FileConfiguration config;
 
   @Autowired
-  public FileController(FileService files, SecurityService security) {
+  public FileController(FileService files, SecurityService security, FileConfiguration config) {
     this.files = files;
     this.security = security;
+    this.config = config;
   }
 
   private static char[] decodePassword(String password) {
@@ -66,15 +72,14 @@ public class FileController {
         }
       }
     } catch (Exception e) {
-      throw internalServerError(null, e);
+      LOG.error("Unexpected exception thrown while fetching file info: " + id, e);
     } finally {
       Arrays.fill(pwdArr, '\u0000');
     }
-    // fake not found response to deter crawlers
+    // fake not found response
     return ApiResponse.notFound(id);
   }
 
-  // TODO This is not super secure! Not sure how to authenticate the request without having the password stored in a String in memory.
   @GetMapping("dl/{id}")
   public ResponseEntity<Object> download(@PathVariable String id, @RequestParam(required = false) String password) {
     if (password == null) {
@@ -84,27 +89,31 @@ public class FileController {
     char[] pwdArr = new char[pwdBuffer.length()];
     pwdBuffer.get(pwdArr);
     try {
-      Resource res = files.serve(id, pwdArr);
-      if (res == null) {
-        return ApiResponse.notFound(id);
+      Resource res = files.serve(id, pwdArr, true);
+      if (res != null) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(res);
       }
-      return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(res);
     } catch (WrongPasswordException e) {
       return ApiResponse.unauthorized();
     } catch (Exception e) {
-      throw internalServerError(null, e);
+      LOG.error("Unexpected exception attempting to download file: " + id, e);
     } finally {
       Arrays.fill(pwdArr, '\u0000');
       pwdBuffer.flip();
       pwdBuffer.put(new char[pwdArr.length]);
       pwdBuffer.clear();
     }
+    return ApiResponse.notFound(id);
   }
 
   @PostMapping
   public ResponseEntity<Object> upload(@RequestParam(required = false) MultipartFile file, @RequestParam(required = false) String password, @RequestParam(defaultValue = "60") int lifespan) {
     if (password == null) {
       return ApiResponse.badRequest("Missing password parameter");
+    }
+    // TODO Integrate member file restrictions
+    if (file != null && file.getSize() > config.getMaxFileSizeAnonymous()) {
+      return ApiResponse.badRequest("File too big, max " + config.getMaxFileSizeAnonymous() + " B");
     }
     CharBuffer pwdBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(password)));
     char[] pwdArr = new char[pwdBuffer.length()];
@@ -141,12 +150,9 @@ public class FileController {
           files.delete(id);
         }
       }
-    } catch (IOException e) {
-      // TODO Is it a good idea to throw this to the user? Maybe a way in for an attacker.
-      throw internalServerError("Could not delete file", e);
     } catch (WrongPasswordException ignored) {
     } catch (Exception e) {
-      throw internalServerError(null, e);
+      LOG.error("Unexpected error attempting to delete file", e);
     } finally {
       Arrays.fill(pwdArr, '\u0000');
       pwdBuffer.flip();

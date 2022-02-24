@@ -11,7 +11,7 @@ public class PublicFileInfo {
     setId(info.getId());
     setUploaded(info.getUploaded());
     setOriginalSize(info.getOriginalSize());
-    setLifespan(info.getLifespan());
+    setExpires(info.getExpires());
   }
 
   @Getter @Setter
@@ -24,6 +24,6 @@ public class PublicFileInfo {
   private long originalSize;
 
   @Getter @Setter
-  private int lifespan;
+  private LocalDateTime expires;
 
 }

@@ -24,6 +24,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -70,7 +71,8 @@ public class FileServiceTests {
     info.setMd5("db89bb5ceab87f9c0fcc2ab36c189c2c");
     info.setSha1("cd36b370758a259b34845084a6cc38473cb95e27");
     info.setUploaded(LocalDateTime.of(2022, 2, 19, 12, 0, 0));
-    info.setLifespan(60);
+    info.setExpires(info.getUploaded().plusMinutes(60));
+    info.setDownloaded(false);
     info.setAuthToken("e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65");
     repo.save(info);
     try (InputStream in = FileServiceTests.class.getClassLoader().getResourceAsStream("test/R1DZ4vpu966g")) {
@@ -126,7 +128,8 @@ public class FileServiceTests {
     assertEquals("cd36b370758a259b34845084a6cc38473cb95e27", info.getSha1());
     assertEquals("e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65", info.getAuthToken());
     assertEquals(LocalDateTime.of(2022, 2, 19, 12, 0, 0), info.getUploaded());
-    assertEquals(60, info.getLifespan());
+    assertEquals(LocalDateTime.of(2022, 2, 19, 13, 0, 0), info.getExpires());
+    assertFalse(info.isDownloaded());
   }
 
   @Test
@@ -184,31 +187,49 @@ public class FileServiceTests {
 
   @Test
   void serve_givenGoodInput_thenSuccess() {
-    Resource res = files.serve("R1DZ4vpu966g", "password123".toCharArray());
+    Resource res = files.serve("R1DZ4vpu966g", "password123".toCharArray(), true);
     String msg = new String(readResource(res), StandardCharsets.UTF_8);
     assertEquals("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", msg);
   }
 
   @Test
   void serve_givenWrongPassword_thenThrow() {
-    assertThrows(WrongPasswordException.class, () -> files.serve("R1DZ4vpu966g", "password124".toCharArray()));
+    assertThrows(WrongPasswordException.class, () -> files.serve("R1DZ4vpu966g", "password124".toCharArray(), true));
   }
 
   @Test
   void serve_givenFileMismatch_thenThrow() throws Exception {
     Files.deleteIfExists(rootDir.resolve("R1DZ4vpu966g"));
-    assertThrows(FileMismatchException.class, () -> files.serve("R1DZ4vpu966g", "password123".toCharArray()));
+    assertThrows(FileMismatchException.class, () -> files.serve("R1DZ4vpu966g", "password123".toCharArray(), true));
   }
 
   @Test
   void serve_givenBadId_thenNull() {
-    assertNull(files.serve("############", "password123".toCharArray()));
+    assertNull(files.serve("############", "password123".toCharArray(), true));
   }
 
   @Test
-  void delete_givenExistingFile_thenSuccess() {
-    assertDoesNotThrow(() -> files.delete("R1DZ4vpu966g"));
+  void delete_givenExistingFile_thenSuccess() throws Exception {
+    files.delete("R1DZ4vpu966g");
     assertFalse(files.getInfo("R1DZ4vpu966g").isPresent());
+  }
+
+  @Test
+  void deleteExpiredFiles_givenExpiredFile_thenDelete() {
+    FileInfo info = repo.findById("R1DZ4vpu966g").get();
+    info.setExpires(LocalDateTime.now().minusMinutes(1));
+    repo.save(info);
+    assertThat(files.deleteExpiredFiles()).isEqualTo(1);
+    assertThat(repo.findById("R1DZ4vpu966g")).isEmpty();
+  }
+
+  @Test
+  void deleteExpiredFiles_givenNoExpiredFiles_thenNoOp() {
+    FileInfo info = repo.findById("R1DZ4vpu966g").get();
+    info.setExpires(LocalDateTime.now().plusMinutes(1));
+    repo.save(info);
+    assertThat(files.deleteExpiredFiles()).isEqualTo(0);
+    assertThat(repo.findById("R1DZ4vpu966g")).isPresent();
   }
 
 }

@@ -7,6 +7,8 @@ import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.ComboAuthToken;
 import me.whizvox.otdl.security.SecurityService;
 import me.whizvox.otdl.util.EncryptedResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -23,10 +25,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class FileService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(FileService.class);
 
   private static final int
       ID_LENGTH = 12;
@@ -123,7 +128,8 @@ public class FileService {
     info.setSha1(HexFormat.of().formatHex(sha1.digest()));
     info.setAuthToken(security.getAuthTokenCodec().encodeToString(security.generateAuthToken(password, salt)));
     info.setUploaded(LocalDateTime.now());
-    info.setLifespan(lifespan);
+    info.setExpires(info.getUploaded().plusMinutes(lifespan));
+    info.setDownloaded(false);
     repo.save(info);
     return info;
   }
@@ -132,14 +138,18 @@ public class FileService {
    * Serves the specified file as a resource for downloading.
    * @param id The ID of the file
    * @param password The password needed to decrypt the file
+   * @param markForDeletion Whether to mark the file to be deleted
    * @return The resource to the file, or <code>null</code> if the file record could not be found
    * @throws FileMismatchException The record of the file is found but not the file itself
    * @throws WrongPasswordException An incorrect password is supplied
    */
-  public Resource serve(String id, char[] password) {
+  public Resource serve(String id, char[] password, boolean markForDeletion) {
     Optional<FileInfo> infoOp = getInfo(id);
     if (infoOp.isPresent()) {
       FileInfo info = infoOp.get();
+      if (info.isDownloaded()) {
+        return null;
+      }
       Path inputFilePath = rootDir.resolve(info.getId());
       if (!Files.exists(inputFilePath)) {
         throw new FileMismatchException("File does not exist");
@@ -147,6 +157,10 @@ public class FileService {
       ComboAuthToken token = security.getAuthTokenCodec().decode(info.getAuthToken());
       if (!token.authorize(security.generateSecret(password, token.getSalt()).getEncoded())) {
         throw new WrongPasswordException();
+      }
+      if (markForDeletion) {
+        info.setDownloaded(true);
+        info.setExpires(LocalDateTime.now().plusMinutes(config.getLifespanAfterAccess()));
       }
       return new EncryptedResource(inputFilePath, security.createCipher(false, password, token.getSalt()));
     }
@@ -164,6 +178,22 @@ public class FileService {
       repo.deleteById(id);
       Files.deleteIfExists(filePath);
     }
+  }
+
+  public int deleteExpiredFiles() {
+    List<FileInfo> expiredFiles = repo.findAllExpired();
+    if (!expiredFiles.isEmpty()) {
+      for (FileInfo info : expiredFiles) {
+        try {
+          Files.deleteIfExists(rootDir.resolve(info.getId()));
+        } catch (IOException e) {
+          LOG.error("Could not delete physical file " + info.getId(), e);
+        }
+      }
+      repo.deleteAll(expiredFiles);
+      return expiredFiles.size();
+    }
+    return 0;
   }
 
 }

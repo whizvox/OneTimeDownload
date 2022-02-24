@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class FileControllerTest {
+class FileControllerTests {
 
   private final FileController controller;
   private final FileRepository repo;
@@ -38,7 +38,7 @@ class FileControllerTest {
   private final Path rootDir;
 
   @Autowired
-  public FileControllerTest(FileController controller, FileRepository repo, FileService service, FileConfiguration config, MockMvc mvc) {
+  public FileControllerTests(FileController controller, FileRepository repo, FileService service, FileConfiguration config, MockMvc mvc) {
     this.controller = controller;
     this.repo = repo;
     this.files = service;
@@ -58,7 +58,7 @@ class FileControllerTest {
     info.setSha1("cd36b370758a259b34845084a6cc38473cb95e27");
     info.setUploaded(LocalDateTime.of(2022, 2, 19, 12, 0, 0));
     info.setAuthToken("e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65");
-    info.setLifespan(60);
+    info.setExpires(info.getUploaded().plusMinutes(60));
     repo.save(info);
     try (InputStream in = FileServiceTests.class.getClassLoader().getResourceAsStream("test/R1DZ4vpu966g")) {
       Files.copy(in, rootDir.resolve("R1DZ4vpu966g"));
@@ -102,7 +102,7 @@ class FileControllerTest {
         .andExpectAll(
             status().isOk(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":200,\"error\":false,\"data\":{\"id\":\"R1DZ4vpu966g\",\"uploaded\":\"2022-02-19T12:00:00\",\"originalSize\":445,\"lifespan\":60}}")
+            content().json("{\"status\":200,\"error\":false,\"data\":{\"id\":\"R1DZ4vpu966g\",\"uploaded\":\"2022-02-19T12:00:00\",\"originalSize\":445,\"expires\":\"2022-02-19T13:00:00\"}}")
         );
   }
 
@@ -225,7 +225,7 @@ class FileControllerTest {
         .andExpectAll(
             status().isOk(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":200,\"error\":false,\"data\":{\"originalSize\":17,\"lifespan\":1}}")
+            content().json("{\"status\":200,\"error\":false,\"data\":{\"originalSize\":17}}")
         );
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
                 .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
@@ -235,7 +235,7 @@ class FileControllerTest {
         .andExpectAll(
             status().isOk(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":200,\"error\":false,\"data\":{\"originalSize\":17,\"lifespan\":" + config.getMaxLifespanMember() + "}}")
+            content().json("{\"status\":200,\"error\":false,\"data\":{\"originalSize\":17}}")
         );
   }
 

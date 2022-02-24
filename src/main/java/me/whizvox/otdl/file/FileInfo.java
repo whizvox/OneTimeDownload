@@ -33,6 +33,9 @@ public class FileInfo {
   private long storedSize;
 
   @Getter @Setter
-  private int lifespan;
+  private LocalDateTime expires;
+
+  @Getter @Setter
+  private boolean downloaded;
 
 }

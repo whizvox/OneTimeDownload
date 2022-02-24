@@ -16,4 +16,13 @@ public class FileConfiguration {
   @Getter @Setter
   private int maxLifespanMember = 1440;
 
+  @Getter @Setter
+  private int maxFileSizeAnonymous = 10000000;
+
+  @Getter @Setter
+  private long maxFileSizeMember = 250000000;
+
+  @Getter @Setter
+  private long lifespanAfterAccess = 15;
+
 }
