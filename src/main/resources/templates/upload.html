@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${page.lang}">
+<head th:replace="fragments/common :: head"></head>
+<body>
+<header th:replace="fragments/common :: header"></header>
+<main class="container">
+  <form id="upload-file">
+    <div class="text-center justify-content-center mb-3">
+      <label for="file">
+        <img class="col-5" src="/img/upload-file.svg" alt="Upload file" id="file-upload-dropzone">
+        <p class="text-muted fs-4" id="file-upload-filename">Click or drag and drop</p>
+      </label>
+      <input type="file" id="file" name="file" hidden>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" id="password" name="password" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label for="password-confirm" class="form-label">Confirm password</label>
+      <input type="password" id="password-confirm" class="form-control">
+    </div>
+    <input type="number" id="lifespan" name="lifespan" value="60" hidden>
+    <div class="mb-3">
+      <button type="submit" class="btn btn-info text-white" disabled>Upload</button>
+    </div>
+  </form>
+  <script src="/js/upload.js"></script>
+</main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
+</html>

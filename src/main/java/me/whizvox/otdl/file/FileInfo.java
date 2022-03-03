@@ -15,6 +15,9 @@ public class FileInfo {
   private String id;
 
   @Getter @Setter
+  private String fileName;
+
+  @Getter @Setter
   private String authToken;
 
   @Getter @Setter

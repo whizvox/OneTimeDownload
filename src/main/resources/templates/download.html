@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${page.lang}">
+<head th:replace="fragments/common :: head"></head>
+<body>
+<header th:replace="fragments/common :: header"></header>
+<main class="container">
+  <div id="incorrect-password" class="alert alert-danger" hidden>
+    Incorrect password
+  </div>
+  <form id="form-download-file">
+    <input type="text" id="file-id" th:value="${file.id}" hidden>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" id="password" name="password" class="form-control">
+    </div>
+    <div class="mb-3">
+      <button id="btn-download" type="button" class="btn btn-info">Download</button>
+    </div>
+  </form>
+  <script src="/js/download.js"></script>
+</main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
+</html>
