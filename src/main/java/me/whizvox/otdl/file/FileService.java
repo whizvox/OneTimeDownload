@@ -118,6 +118,7 @@ public class FileService {
     }
     FileInfo info = new FileInfo();
     info.setId(id);
+    info.setFileName(file.getOriginalFilename());
     info.setOriginalSize(file.getSize());
     try {
       info.setStoredSize(Files.size(path));
@@ -162,7 +163,7 @@ public class FileService {
         info.setDownloaded(true);
         info.setExpires(LocalDateTime.now().plusMinutes(config.getLifespanAfterAccess()));
       }
-      return new EncryptedResource(inputFilePath, security.createCipher(false, password, token.getSalt()));
+      return new EncryptedResource(inputFilePath, security.createCipher(false, password, token.getSalt()), info.getFileName());
     }
     return null;
   }

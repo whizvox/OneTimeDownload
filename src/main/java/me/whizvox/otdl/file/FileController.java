@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -91,7 +92,11 @@ public class FileController {
     try {
       Resource res = files.serve(id, pwdArr, true);
       if (res != null) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(res);
+        return ResponseEntity
+            .ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + res.getFilename() + "\"")
+            .body(res);
       }
     } catch (WrongPasswordException e) {
       return ApiResponse.unauthorized();

@@ -13,10 +13,12 @@ public class EncryptedResource extends AbstractResource {
 
   private final Path inputFilePath;
   private final Cipher cipher;
+  private final String fileName;
 
-  public EncryptedResource(Path inputFilePath, Cipher cipher) {
+  public EncryptedResource(Path inputFilePath, Cipher cipher, String fileName) {
     this.inputFilePath = inputFilePath;
     this.cipher = cipher;
+    this.fileName = fileName;
   }
 
   @Override
@@ -27,6 +29,11 @@ public class EncryptedResource extends AbstractResource {
   @Override
   public InputStream getInputStream() throws IOException {
     return new CipherInputStream(Files.newInputStream(inputFilePath), cipher);
+  }
+
+  @Override
+  public String getFilename() {
+    return fileName;
   }
 
 }
