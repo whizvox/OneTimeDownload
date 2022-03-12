@@ -1,29 +1,34 @@
 # One-Time Download (1TDL)
 
-`Work-in-progress`
+A file-sharing service that allows only 1 download per file. All uploaded files are password-encrypted and require the
+password to download.
 
 ## Run/Test Environment Configuration
 
-*DO NOT TRANSFER THESE SETTINGS TO A PRODUCTION ENVIRONMENT! THESE ARE JUST TO RUN THE PROJECT IN AN EASILY-DEBUGGABLE
-WAY!*
-
-These settings can be altered in the main or test `application.properties`.
+* Run working directory: `./run` (included in `.gitignore`)
+* Run properties file: `./run/application.properties`
+* Test working directory: `./test` (included in `.gitignore`)
+* Test properties file: `./test/application.properties`
 
 ### Data Source Configuration
 
-* **Driver**: MySQL
+**MySQL**
 
-### MySQL Configuration
+* `spring.datasource.username: <username>`
+* `spring.datasource.password: <password>`
+* `spring.datasource.url: <url>`
 
-* **Host:** `127.0.0.1`
-* **Port:** `3306`
-* **Username:** `dev`
-* **Password:** `g*#whRR7HT3v0V6ydBZh`
-* **Permissions:** All, perhaps
+### Storage Configuration
 
-**Starter Script:**
+**AWS S3**
 
-```
-CREATE DATABASE odtl_dev;
-CREATE DATABASE odtl_dev_test;
-```
+* `otdl.storage.module: s3`
+* `otdl.storage.s3.region.static: <region code>`
+* `otdl.storage.s3.credentials.access-key: <access key>`
+* `otdl.storage.s3.credentials.secret-key: <secret key>`
+* `otdl.storage.s3.bucket-name: <bucket name>`
+
+**Local File System**
+
+* `otdl.storage.module: local`
+* `otdl.storage.local.location: <path>`

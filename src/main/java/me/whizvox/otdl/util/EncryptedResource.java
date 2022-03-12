@@ -1,39 +1,43 @@
 package me.whizvox.otdl.util;
 
-import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.InputStreamResource;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
-public class EncryptedResource extends AbstractResource {
+public class EncryptedResource extends InputStreamResource {
 
-  private final Path inputFilePath;
   private final Cipher cipher;
-  private final String fileName;
+  private final String originalFileName;
+  private final long contentLength;
 
-  public EncryptedResource(Path inputFilePath, Cipher cipher, String fileName) {
-    this.inputFilePath = inputFilePath;
+  public EncryptedResource(InputStream in, Cipher cipher, String originalFileName, long contentLength) {
+    super(in);
     this.cipher = cipher;
-    this.fileName = fileName;
+    this.originalFileName = originalFileName;
+    this.contentLength = contentLength;
   }
 
   @Override
   public String getDescription() {
-    return "path=%s, cipher=%s".formatted(inputFilePath.getFileName().toString(), cipher.toString());
+    return "Encrypted resource: cipher=%s".formatted(cipher.toString());
   }
 
   @Override
   public InputStream getInputStream() throws IOException {
-    return new CipherInputStream(Files.newInputStream(inputFilePath), cipher);
+    return new CipherInputStream(super.getInputStream(), cipher);
   }
 
   @Override
   public String getFilename() {
-    return fileName;
+    return originalFileName;
+  }
+
+  @Override
+  public long contentLength() throws IOException {
+    return contentLength;
   }
 
 }

@@ -43,7 +43,12 @@ public class FileController {
   }
 
   private static char[] decodePassword(String password) {
-    CharBuffer pwdBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(password)));
+    CharBuffer pwdBuffer;
+    try {
+      pwdBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(password)));
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
     char[] pwdArr = new char[pwdBuffer.length()];
     pwdBuffer.get(pwdArr);
     pwdBuffer.flip();
@@ -64,18 +69,20 @@ public class FileController {
       return ApiResponse.unauthorized();
     }
     char[] pwdArr = decodePassword(password);
-    try {
-      Optional<FileInfo> infoOp = files.getInfo(id);
-      if (infoOp.isPresent()) {
-        FileInfo info = infoOp.get();
-        if (security.authenticate(info.getAuthToken(), pwdArr)) {
-          return ApiResponse.ok(new PublicFileInfo(info));
+    if (pwdArr != null) {
+      try {
+        Optional<FileInfo> infoOp = files.getInfo(id);
+        if (infoOp.isPresent()) {
+          FileInfo info = infoOp.get();
+          if (security.authenticate(info.getAuthToken(), pwdArr)) {
+            return ApiResponse.ok(new PublicFileInfo(info));
+          }
         }
+      } catch(Exception e){
+        LOG.error("Unexpected exception thrown while fetching file info: " + id, e);
+      } finally {
+        Arrays.fill(pwdArr, '\u0000');
       }
-    } catch (Exception e) {
-      LOG.error("Unexpected exception thrown while fetching file info: " + id, e);
-    } finally {
-      Arrays.fill(pwdArr, '\u0000');
     }
     // fake not found response
     return ApiResponse.notFound(id);
@@ -86,29 +93,50 @@ public class FileController {
     if (password == null) {
       return ApiResponse.unauthorized();
     }
-    CharBuffer pwdBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(password)));
-    char[] pwdArr = new char[pwdBuffer.length()];
-    pwdBuffer.get(pwdArr);
-    try {
-      Resource res = files.serve(id, pwdArr, true);
-      if (res != null) {
-        return ResponseEntity
-            .ok()
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + res.getFilename() + "\"")
-            .body(res);
+    char[] pwdArr = decodePassword(password);
+    if (pwdArr != null) {
+      try {
+        Resource res = files.serve(id, pwdArr, true);
+        if (res != null) {
+          return ResponseEntity
+              .ok()
+              .contentType(MediaType.APPLICATION_OCTET_STREAM)
+              .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + res.getFilename() + "\"")
+              .body(res);
+        }
+      } catch (WrongPasswordException e) {
+        return ApiResponse.unauthorized();
+      } catch (Exception e) {
+        LOG.error("Unexpected exception attempting to download file: " + id, e);
+      } finally {
+        Arrays.fill(pwdArr, '\u0000');
       }
-    } catch (WrongPasswordException e) {
-      return ApiResponse.unauthorized();
-    } catch (Exception e) {
-      LOG.error("Unexpected exception attempting to download file: " + id, e);
-    } finally {
-      Arrays.fill(pwdArr, '\u0000');
-      pwdBuffer.flip();
-      pwdBuffer.put(new char[pwdArr.length]);
-      pwdBuffer.clear();
     }
     return ApiResponse.notFound(id);
+  }
+
+  @GetMapping("available/{id}")
+  public ResponseEntity<Object> checkIfAvailable(@PathVariable String id, @RequestParam(required = false) String password) {
+    if (password == null) {
+      return ApiResponse.unauthorized();
+    }
+    char[] pwdArr = decodePassword(password);
+    if (pwdArr != null) {
+      try {
+        Optional<FileInfo> infoOp = files.getInfo(id);
+        if (infoOp.isPresent()) {
+          FileInfo info = infoOp.get();
+          if (!info.isDownloaded() && security.authenticate(info.getAuthToken(), pwdArr)) {
+            return ApiResponse.ok(true);
+          }
+        }
+      } catch (Exception e) {
+        LOG.error("Unexpected error while checking file availability", e);
+      } finally {
+        Arrays.fill(pwdArr, '\u0000');
+      }
+    }
+    return ApiResponse.ok(false);
   }
 
   @PostMapping
@@ -120,23 +148,20 @@ public class FileController {
     if (file != null && file.getSize() > config.getMaxFileSizeAnonymous()) {
       return ApiResponse.badRequest("File too big, max " + config.getMaxFileSizeAnonymous() + " B");
     }
-    CharBuffer pwdBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(password)));
-    char[] pwdArr = new char[pwdBuffer.length()];
-    pwdBuffer.get(pwdArr);
-    try {
-      return ApiResponse.ok(new PublicFileInfo(files.upload(file, lifespan, pwdArr)));
-    } catch (InvalidLifespanException | NoFileException e) {
-      return ApiResponse.badRequest(e.getMessage());
-    } catch (IOException e) {
-      throw internalServerError("Could not upload file", e);
-    } catch (Exception e) {
-      throw internalServerError(null, e);
-    } finally {
-      Arrays.fill(pwdArr, '\u0000');
-      pwdBuffer.flip();
-      pwdBuffer.put(pwdArr);
-      pwdBuffer.clear();
+    char[] pwdArr = decodePassword(password);
+    if (pwdArr != null) {
+      try {
+        return ApiResponse.ok(new PublicFileInfo(files.upload(file, lifespan, pwdArr)));
+      } catch (InvalidLifespanException | NoFileException e) {
+        return ApiResponse.badRequest(e.getMessage());
+      } catch (Exception e) {
+        LOG.error("Could not upload file", e);
+        throw internalServerError(null, e);
+      } finally {
+        Arrays.fill(pwdArr, '\u0000');
+      }
     }
+    return ApiResponse.badRequest("Invalid password base64 string");
   }
 
   @DeleteMapping("{id}")
@@ -144,25 +169,22 @@ public class FileController {
     if (password == null) {
       return ApiResponse.unauthorized();
     }
-    CharBuffer pwdBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(Base64.getUrlDecoder().decode(password)));
-    char[] pwdArr = new char[pwdBuffer.length()];
-    pwdBuffer.get(pwdArr);
-    try {
-      Optional<FileInfo> infoOp = files.getInfo(id);
-      if (infoOp.isPresent()) {
-        FileInfo info = infoOp.get();
-        if (security.authenticate(info.getAuthToken(), pwdArr)) {
-          files.delete(id);
+    char[] pwdArr = decodePassword(password);
+    if (pwdArr != null) {
+      try {
+        Optional<FileInfo> infoOp = files.getInfo(id);
+        if (infoOp.isPresent()) {
+          FileInfo info = infoOp.get();
+          if (security.authenticate(info.getAuthToken(), pwdArr)) {
+            files.delete(id);
+          }
         }
+      } catch (WrongPasswordException ignored) {
+      } catch (Exception e) {
+        LOG.error("Unexpected error attempting to delete file", e);
+      } finally {
+        Arrays.fill(pwdArr, '\u0000');
       }
-    } catch (WrongPasswordException ignored) {
-    } catch (Exception e) {
-      LOG.error("Unexpected error attempting to delete file", e);
-    } finally {
-      Arrays.fill(pwdArr, '\u0000');
-      pwdBuffer.flip();
-      pwdBuffer.put(pwdArr);
-      pwdBuffer.clear();
     }
     // intentionally return false positives in the event of an unknown ID or wrong password
     return ApiResponse.ok();

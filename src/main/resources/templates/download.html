@@ -4,11 +4,11 @@
 <body>
 <header th:replace="fragments/common :: header"></header>
 <main class="container">
-  <div id="incorrect-password" class="alert alert-danger" hidden>
-    Incorrect password
+  <div id="access-denied" class="alert alert-danger fw-bold" hidden>
+    Could not access resource
   </div>
   <form id="form-download-file">
-    <input type="text" id="file-id" th:value="${file.id}" hidden>
+    <input type="text" id="file-id" th:value="${fileId}" hidden>
     <div class="mb-3">
       <label for="password" class="form-label">Password</label>
       <input type="password" id="password" name="password" class="form-control">

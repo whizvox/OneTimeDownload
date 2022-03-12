@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+@Getter @Setter
 public class PublicFileInfo {
 
   public PublicFileInfo(FileInfo info) {
@@ -12,18 +13,17 @@ public class PublicFileInfo {
     setUploaded(info.getUploaded());
     setOriginalSize(info.getOriginalSize());
     setExpires(info.getExpires());
+    setDownloaded(info.isDownloaded());
   }
 
-  @Getter @Setter
   private String id;
 
-  @Getter @Setter
   private LocalDateTime uploaded;
 
-  @Getter @Setter
   private long originalSize;
 
-  @Getter @Setter
   private LocalDateTime expires;
+
+  private boolean downloaded;
 
 }

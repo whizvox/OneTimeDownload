@@ -6,6 +6,9 @@ import me.whizvox.otdl.exception.NoFileException;
 import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.ComboAuthToken;
 import me.whizvox.otdl.security.SecurityService;
+import me.whizvox.otdl.storage.InputFile;
+import me.whizvox.otdl.storage.StorageException;
+import me.whizvox.otdl.storage.StorageService;
 import me.whizvox.otdl.util.EncryptedResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -27,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class FileService {
@@ -40,19 +45,21 @@ public class FileService {
   private final FileRepository repo;
   private final FileConfiguration config;
   private final SecurityService security;
-  private final Path rootDir;
+  private final StorageService storage;
+  private final Path tempDir;
 
   @Autowired
-  public FileService(FileRepository repo, FileConfiguration config, SecurityService security) {
+  public FileService(FileRepository repo, FileConfiguration config, SecurityService security, StorageService storage) {
     this.repo = repo;
     this.config = config;
     this.security = security;
+    this.storage = storage;
+    tempDir = Paths.get(config.getTempDirectoryLocation()).normalize().toAbsolutePath();
 
-    rootDir = Path.of(config.getUploadedFilesDirectory()).normalize().toAbsolutePath();
     try {
-      Files.createDirectories(rootDir);
+      Files.createDirectories(tempDir);
     } catch (IOException e) {
-      throw new RuntimeException("Could not create root directory for files service", e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -100,13 +107,13 @@ public class FileService {
     if (lifespan < 1 || lifespan > config.getMaxLifespanMember()) {
       throw new InvalidLifespanException(lifespan);
     }
+    Path encPath = tempDir.resolve(UUID.randomUUID().toString());
     String id = generateId();
-    Path path = rootDir.resolve(id);
     byte[] salt = security.generateSalt();
     MessageDigest md5 = createMD5();
     MessageDigest sha1 = createSHA1();
     try (InputStream in = file.getInputStream();
-         OutputStream out = Files.newOutputStream(path);
+         OutputStream out = Files.newOutputStream(encPath);
          CipherOutputStream cout = new CipherOutputStream(out, security.createCipher(true, password, salt))) {
       byte[] buffer = new byte[1024];
       int read;
@@ -116,15 +123,17 @@ public class FileService {
         cout.write(buffer, 0, read);
       }
     }
+    storage.store(InputFile.local(encPath), id);
     FileInfo info = new FileInfo();
-    info.setId(id);
-    info.setFileName(file.getOriginalFilename());
-    info.setOriginalSize(file.getSize());
     try {
-      info.setStoredSize(Files.size(path));
+      info.setStoredSize(Files.size(encPath));
     } catch (IOException e) {
       info.setStoredSize(-1);
     }
+    Files.delete(encPath);
+    info.setId(id);
+    info.setFileName(file.getOriginalFilename());
+    info.setOriginalSize(file.getSize());
     info.setMd5(HexFormat.of().formatHex(md5.digest()));
     info.setSha1(HexFormat.of().formatHex(sha1.digest()));
     info.setAuthToken(security.getAuthTokenCodec().encodeToString(security.generateAuthToken(password, salt)));
@@ -151,8 +160,7 @@ public class FileService {
       if (info.isDownloaded()) {
         return null;
       }
-      Path inputFilePath = rootDir.resolve(info.getId());
-      if (!Files.exists(inputFilePath)) {
+      if (!storage.exists(info.getId())) {
         throw new FileMismatchException("File does not exist");
       }
       ComboAuthToken token = security.getAuthTokenCodec().decode(info.getAuthToken());
@@ -162,8 +170,9 @@ public class FileService {
       if (markForDeletion) {
         info.setDownloaded(true);
         info.setExpires(LocalDateTime.now().plusMinutes(config.getLifespanAfterAccess()));
+        repo.save(info);
       }
-      return new EncryptedResource(inputFilePath, security.createCipher(false, password, token.getSalt()), info.getFileName());
+      return new EncryptedResource(storage.openStream(info.getId()), security.createCipher(false, password, token.getSalt()), info.getFileName(), info.getOriginalSize());
     }
     return null;
   }
@@ -175,9 +184,8 @@ public class FileService {
    */
   public void delete(String id) throws IOException {
     if (repo.existsById(id)) {
-      Path filePath = rootDir.resolve(id);
       repo.deleteById(id);
-      Files.deleteIfExists(filePath);
+      storage.delete(id);
     }
   }
 
@@ -186,8 +194,8 @@ public class FileService {
     if (!expiredFiles.isEmpty()) {
       for (FileInfo info : expiredFiles) {
         try {
-          Files.deleteIfExists(rootDir.resolve(info.getId()));
-        } catch (IOException e) {
+          storage.delete(info.getId());
+        } catch (StorageException e) {
           LOG.error("Could not delete physical file " + info.getId(), e);
         }
       }

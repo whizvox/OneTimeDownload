@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${page.lang}">
+<head th:replace="fragments/common :: head">
+  <title>Page title</title>
+</head>
+<body class="container">
+<header th:replace="fragments/common :: header"></header>
+<h1>Debug controls</h1>
+<p class="alert alert-danger">Using any of these options will make permanent changes to the site! If you are able to
+  access this page in production, contact an admin immediately!</p>
+<ul class="list-group mb-3">
+  <li class="list-group-item list-group-item-info">Files</li>
+  <li class="list-group-item"><button class="btn btn-danger" type="button" id="btn-files-clear">Clear all files</button></li>
+</ul>
+<ul class="list-group mb-3">
+  <li class="list-group-item list-group-item-info">Server</li>
+  <li class="list-group-item"><button class="btn btn-danger" type="button" id="btn-server-shutdown">Shutdown server</button></li>
+</ul>
+<script src="/js/debug.js"></script>
+</body>
+</html>

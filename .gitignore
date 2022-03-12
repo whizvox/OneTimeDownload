@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 test_files/
 run/
+test/
 
 ### STS ###
 .apt_generated

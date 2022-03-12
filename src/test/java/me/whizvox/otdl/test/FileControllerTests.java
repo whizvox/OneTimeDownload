@@ -43,7 +43,7 @@ class FileControllerTests {
     this.repo = repo;
     this.files = service;
     this.config = config;
-    rootDir = Paths.get(config.getUploadedFilesDirectory());
+    rootDir = Paths.get("files").toAbsolutePath().normalize();
     this.mvc = mvc;
   }
 
@@ -151,6 +151,39 @@ class FileControllerTests {
   }
 
   @Test
+  void checkIfAvailable_givenKnownIdAndCorrectPassword_thenOkTrue() throws Exception {
+    mvc.perform(get("/files/available/R1DZ4vpu966g").param("password", "cGFzc3dvcmQxMjM"))
+        .andDo(print())
+        .andExpectAll(
+            status().isOk(),
+            content().contentType(MediaType.APPLICATION_JSON),
+            content().json("{\"status\":200,\"error\":false,\"data\":true}")
+        );
+  }
+
+  @Test
+  void checkIfAvailable_givenUnknownId_thenOkFalse() throws Exception {
+    mvc.perform(get("/files/available/G1DZ4vpu966g").param("password", "cGFzc3dvcmQxMjM"))
+        .andDo(print())
+        .andExpectAll(
+            status().isOk(),
+            content().contentType(MediaType.APPLICATION_JSON),
+            content().json("{\"status\":200,\"error\":false,\"data\":false}")
+        );
+  }
+
+  @Test
+  void checkIfAvailable_givenIncorrectPassword_thenOkFalse() throws Exception {
+    mvc.perform(get("/files/available/G1DZ4vpu966g").param("password", "somethingblah"))
+        .andDo(print())
+        .andExpectAll(
+            status().isOk(),
+            content().contentType(MediaType.APPLICATION_JSON),
+            content().json("{\"status\":200,\"error\":false,\"data\":false}")
+        );
+  }
+
+  @Test
   void download_givenValidIdAndCorrectPassword_thenOk() throws Exception {
     mvc.perform(get("/files/dl/R1DZ4vpu966g").param("password", "cGFzc3dvcmQxMjM"))
         .andDo(print())
@@ -191,6 +224,18 @@ class FileControllerTests {
             status().isUnauthorized(),
             content().contentType(MediaType.APPLICATION_JSON),
             content().json("{\"status\":401,\"error\":true,\"data\":{\"message\":\"Unauthorized\"}}")
+        );
+  }
+
+  @Test
+  void download_givenDownloadedFile_thenNotFound() throws Exception {
+    mvc.perform(get("/files/dl/R1DZ4vpu966g").param("password", "cGFzc3dvcmQxMjM"));
+    mvc.perform(get("/files/dl/R1DZ4vpu966g").param("password", "cGFzc3dvcmQxMjM"))
+        .andDo(print())
+        .andExpectAll(
+            status().isNotFound(),
+            content().contentType(MediaType.APPLICATION_JSON),
+            content().json("{\"status\":404,\"error\":true,\"data\":{\"message\":\"Resource not found\",\"path\":\"R1DZ4vpu966g\"}}")
         );
   }
 
@@ -294,6 +339,19 @@ class FileControllerTests {
             status().isBadRequest(),
             content().contentType(MediaType.APPLICATION_JSON),
             content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Missing password parameter\"}}")
+        );
+  }
+
+  @Test
+  void upload_givenMalformedPassword_thenBadRequest() throws Exception {
+    mvc.perform(MockMvcRequestBuilders.multipart("/files")
+            .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
+            .param("password", "invalid password"))
+        .andDo(print())
+        .andExpectAll(
+            status().isBadRequest(),
+            content().contentType(MediaType.APPLICATION_JSON),
+            content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Invalid password base64 string\"}}")
         );
   }
 

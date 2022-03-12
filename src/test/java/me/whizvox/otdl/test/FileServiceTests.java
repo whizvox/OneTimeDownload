@@ -42,7 +42,7 @@ public class FileServiceTests {
     this.files = files;
 
     maxLifespan = config.getMaxLifespanMember();
-    rootDir = Paths.get(config.getUploadedFilesDirectory()).normalize().toAbsolutePath();
+    rootDir = Paths.get("files").toAbsolutePath();
 
     //files.upload(new MockMultipartFile("test.txt", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.".getBytes(StandardCharsets.UTF_8)), "password123".toCharArray());
   }
@@ -206,6 +206,12 @@ public class FileServiceTests {
   @Test
   void serve_givenBadId_thenNull() {
     assertNull(files.serve("############", "password123".toCharArray(), true));
+  }
+
+  @Test
+  void serve_givenDownloadedFile_thenNull() {
+    files.serve("R1DZ4vpu966g", "password123".toCharArray(), true);
+    assertThat(files.serve("R1DZ4vpu966g", "password123".toCharArray(), true)).isNull();
   }
 
   @Test

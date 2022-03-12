@@ -3,10 +3,7 @@ package me.whizvox.otdl.security;
 import java.util.Arrays;
 import java.util.HexFormat;
 
-public class ComboAuthToken {
-
-  private final byte[] hash;
-  private final byte[] salt;
+public record ComboAuthToken(byte[] hash, byte[] salt) {
 
   public ComboAuthToken(byte[] hash, byte[] salt) {
     this.hash = hash.clone();

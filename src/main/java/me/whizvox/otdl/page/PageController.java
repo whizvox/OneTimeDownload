@@ -47,10 +47,15 @@ public class PageController {
 
   @GetMapping("/download/{fileId}")
   public ModelAndView download(@PathVariable String fileId) {
-    FileInfo info = files.getInfo(fileId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     return new ModelAndView("download")
         .addObject("page", createStandardPage("Download file", "/download"))
-        .addObject("file", new ViewPageFileInfo(info));
+        .addObject("fileId", fileId);
+  }
+
+  @GetMapping("/debug")
+  public ModelAndView debug() {
+    return new ModelAndView("debug")
+        .addObject("page", createStandardPage("Debug", "/debug"));
   }
 
   /*@GetMapping("contact")
