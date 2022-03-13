@@ -1,11 +1,22 @@
-let accessDeniedDiv = $('#access-denied');
+let accessDeniedAlert = $('#access-denied');
 let form = $('#form-download-file');
 let idField = $('#file-id');
 let passwordField = $('#password');
 let downloadButton = $('#btn-download');
 
+function onDownloadStage(before) {
+  if (before) {
+    downloadButton.attr('disabled', true);
+    downloadButton.text('Downloading...');
+    accessDeniedAlert.attr('hidden', true);
+  } else {
+    downloadButton.attr('disabled', false);
+    downloadButton.text('Download');
+  }
+}
+
 downloadButton.on('click', function() {
-  accessDeniedDiv.attr('hidden', true);
+  onDownloadStage(true);
   let fileId = idField[0].value;
   let reqData = {'password': encodeUTF8ToBase64(passwordField[0].value)};
   $.ajax({
@@ -18,11 +29,14 @@ downloadButton.on('click', function() {
       if (data.data) {
         $(location).attr('href', `/files/dl/${fileId}?password=${reqData['password']}`);
       } else {
-        accessDeniedDiv.attr('hidden', false);
+        accessDeniedAlert.attr('hidden', false);
       }
     },
     error: function(xhr, status, error) {
-      accessDeniedDiv.attr('hidden', false);
+      accessDeniedAlert.attr('hidden', false);
+    },
+    complete: function(xhr, status) {
+      onDownloadStage(false);
     }
   });
 });
