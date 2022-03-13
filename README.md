@@ -1,7 +1,7 @@
 # One-Time Download (1TDL)
 
 A file-sharing service that allows only 1 download per file. All uploaded files are password-encrypted and require the
-password to download.
+correct password to download.
 
 ## Run/Test Environment Configuration
 
@@ -17,6 +17,7 @@ password to download.
 * `spring.datasource.username: <username>`
 * `spring.datasource.password: <password>`
 * `spring.datasource.url: <url>`
+* `spring.jpa.hibernate.ddl-auto=update` (recommended for testing)
 
 ### Storage Configuration
 
