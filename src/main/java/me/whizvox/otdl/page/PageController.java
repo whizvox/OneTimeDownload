@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 public class PageController {
 
@@ -36,7 +38,8 @@ public class PageController {
   }
 
   @GetMapping({"/", "index", "home"})
-  public ModelAndView index(@AuthenticationPrincipal User user) {
+  public ModelAndView index(@AuthenticationPrincipal User user, HttpServletRequest req) {
+    req.isUserInRole("ADMIN");
     return new ModelAndView("upload")
         .addObject("page", createStandardPage("Home", "/"))
         .addObject("user", user);
@@ -90,6 +93,15 @@ public class PageController {
       users.confirmUser(token);
     } catch (TokenDoesNotExistException ignored) {}
     return new ModelAndView("redirect:/login?confirmed");
+  }
+
+  @GetMapping("/need-confirm")
+  public ModelAndView needConfirm(@AuthenticationPrincipal User user) {
+    if (user != null && user.isLoggedIn()) {
+      return new ModelAndView("redirect:/");
+    }
+    return new ModelAndView("need-confirm")
+        .addObject("page", createStandardPage("Need account confirmation", "/need-confirm"));
   }
 
   /*@GetMapping("contact")

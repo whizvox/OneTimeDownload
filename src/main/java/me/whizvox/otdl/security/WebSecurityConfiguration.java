@@ -37,8 +37,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
             .defaultSuccessUrl("/")
             .and()
         .csrf()
-            .ignoringAntMatchers("/logout/**", "/login/**")
-            .and()
+            .disable()
         .logout()
             .logoutUrl("/logout")
             .logoutSuccessHandler((request, response, authentication) -> {

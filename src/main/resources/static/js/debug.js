@@ -42,3 +42,19 @@ clickConfirmLink($('#btn-files-clear'), 'files/clear', 'delete', function(data) 
 clickConfirmLink($('#btn-server-shutdown'), 'server/shutdown', 'post', function() {
   alert('Server will shutdown in 5 seconds');
 });
+
+clickConfirmLink($('#btn-add-admin'), 'users/admin', 'post', function(data) {
+  alert(`Admin account created. Username: admin, Password: ${data.data}`);
+});
+
+clickConfirmLink($('#btn-delete-admin'), 'users/admin', 'delete', function() {
+  alert('Admin account deleted');
+});
+
+clickConfirmLink($('#btn-clear-tokens'), 'tokens/clear', 'delete', function(data) {
+  alert(`${data.data} token(s) deleted`);
+});
+
+clickConfirmLink($('#btn-clear-users'), 'users/clear', 'delete', function(data) {
+  alert(`${data.data} user(s) deleted`);
+});
