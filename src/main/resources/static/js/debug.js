@@ -21,6 +21,7 @@ function clickConfirmLink(elem, href, method = 'get', onSuccess = undefined, onE
         processData: false,
         contentType: false,
         cache: false,
+        headers: getCSRFHeader(),
         success: onSuccess,
         error: onError
       });

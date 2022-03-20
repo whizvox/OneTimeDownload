@@ -25,6 +25,7 @@ downloadButton.on('click', function() {
     contentType: false,
     cache: false,
     data: reqData,
+    headers: getCSRFHeader(),
     success: function(data) {
       if (data.data) {
         $(location).attr('href', `/files/dl/${fileId}?password=${reqData['password']}`);

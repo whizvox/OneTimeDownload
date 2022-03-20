@@ -64,6 +64,7 @@ submitButton.on('click', function(e) {
     contentType: false,
     cache: false,
     data: formData,
+    headers: getCSRFHeader(),
     success: function(data) {
       $(location).attr('href', '/view/' + data.data.id);
     },

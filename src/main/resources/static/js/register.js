@@ -11,6 +11,7 @@ $(document).ready(function() {
       url: $(this).attr('action'),
       type: $(this).attr('method'),
       data: formData,
+      headers: getCSRFHeader(),
       processData: false,
       contentType: false,
       cache: false,
