@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html th:lang="${page.lang}" lang="en">
+<head th:replace="fragments/common :: head">
+  <title>Log in</title>
+</head>
+<body>
+<header th:replace="fragments/common :: header"></header>
+<main class="container">
+  <h1 class="mb-3">Log in</h1>
+  <p th:if="${#request.getParameter('confirmed')}" class="alert alert-info">
+    Thank you for confirming your account. You may log in now.
+  </p>
+  <form id="form-login" method="post" th:action="@{/login}">
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input type="text" id="email" name="username" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" id="password" name="password" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-info">Login</button>
+  </form>
+</main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
+</html>

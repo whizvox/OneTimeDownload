@@ -2,24 +2,28 @@
 <html>
 <head th:fragment="head">
   <meta charset="UTF-8">
+  <!--/*@thymesVar id="page" type="me.whizvox.otdl.page.Page"*/-->
   <title th:text="${page.title}">Page title</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="/css/main.css">
-  <script src="/js/common.js"></script>
   <script src="/js/bootstrap.min.js"></script>
   <script src="/js/jquery-3.6.0.min.js"></script>
+  <script src="/js/common.js"></script>
+  <meta th:if="${_csrf}" name="_csrf" th:content="${_csrf.token}">
+  <meta th:if="${_csrf}" name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body class="container">
 <header th:fragment="header" class="p-3 bg-dark text-white border-bottom mb-3">
   <div class="container d-flex flex-wrap justify-content-center justify-content-lg-start">
     <a href="/" class="text-decoration-none col-lg-6"><img class="img-fluid" src="/img/logo-dotcom.png" alt="1TDL.com logo"/></a>
-    <div th:if="!${user}" class="col-lg-6 text-end align-self-center">
-      <button type="button" class="btn btn-outline-light me-2" id="btn-login">Login</button>
-      <button type="button" class="btn btn-info" id="btn-register">Register</button>
+    <!--/*@thymesVar id="user" type="me.whizvox.otdl.user.User"*/-->
+    <div th:if="${user == null || !user.isLoggedIn()}" class="col-lg-6 text-end align-self-center">
+      <a href="/login" class="btn btn-outline-light me-2" id="btn-login">Login</a>
+      <a href="/register" class="btn btn-info" id="btn-register">Register</a>
     </div>
-    <div th:if="${user}" class="col-lg-6 text-end align-self-center">
+    <div th:if="${user != null && user.isLoggedIn()}" class="col-lg-6 text-end align-self-center">
       <button type="button" class="btn btn-info" id="btn-logout">Logout</button>
     </div>
   </div>
