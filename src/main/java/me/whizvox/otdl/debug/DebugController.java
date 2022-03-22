@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -71,10 +73,16 @@ public class DebugController implements ApplicationContextAware {
   }
 
   @DeleteMapping("users/clear")
-  public ResponseEntity<Object> clearUsers() {
-    long count = userRepo.count();
-    userRepo.deleteAll();
-    return ApiResponse.ok(count);
+  public ResponseEntity<Object> clearUsers(@AuthenticationPrincipal User user) {
+    long tokensCount = tokenRepo.count();
+    tokenRepo.deleteAll();
+    long usersCount = userRepo.count();
+    userRepo.findAll().forEach(inUser -> {
+      if (!Objects.equals(inUser.getId(), user.getId())) {
+        userRepo.deleteById(inUser.getId());
+      }
+    });
+    return ApiResponse.ok(new long[] {tokensCount, usersCount});
   }
 
   @PostMapping("users/admin")

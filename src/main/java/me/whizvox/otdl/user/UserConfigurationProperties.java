@@ -12,10 +12,10 @@ public class UserConfigurationProperties {
 
   private String passwordRequirementDescription = "Must be at least 8 characters";
 
-  private String emailFrom;
+  private String emailFromAddress;
 
-  private String emailSubject;
+  private String emailSubject = "Confirm your email address";
 
-  private String emailHost;
+  private String emailConfirmHost;
 
 }

@@ -5,7 +5,6 @@ import me.whizvox.otdl.exception.InvalidPasswordException;
 import me.whizvox.otdl.exception.TokenDoesNotExistException;
 import me.whizvox.otdl.misc.EmptyJavaMailSender;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.Nullable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,8 +37,8 @@ public class UserService implements UserDetailsService {
     this.encoder = encoder;
     this.emailSender = emailSender;
     this.config = config;
-    //shouldConfirmEmail = !(emailSender instanceof EmptyJavaMailSender);
-    shouldConfirmEmail = true;
+    // TODO Not a good way to check, should somehow include otdl.email.enable value
+    shouldConfirmEmail = !(emailSender instanceof EmptyJavaMailSender);
 
     try {
       passwordCheck = Pattern.compile(config.getPasswordRequirementRegex());
@@ -77,9 +76,9 @@ public class UserService implements UserDetailsService {
     tokens.store(token);
     SimpleMailMessage msg = new SimpleMailMessage();
     msg.setTo(user.getEmail());
-    msg.setFrom(config.getEmailFrom());
+    msg.setFrom(config.getEmailFromAddress());
     msg.setSubject(config.getEmailSubject());
-    msg.setText("Click here to confirm your account: " + config.getEmailHost() + "/confirm/" + token);
+    msg.setText("Click here to confirm your account: " + config.getEmailConfirmHost() + "/confirm/" + token.getToken());
     emailSender.send(msg);
     return user;
   }
