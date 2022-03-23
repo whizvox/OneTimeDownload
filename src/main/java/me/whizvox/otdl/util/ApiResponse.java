@@ -63,6 +63,10 @@ public class ApiResponse {
     return createEntity(HttpStatus.UNAUTHORIZED, true, new ErrorData("Unauthorized"));
   }
 
+  public static ResponseEntity<Object> forbidden(@Nullable String msg) {
+    return createEntity(HttpStatus.FORBIDDEN, true, msg);
+  }
+
   public static ResponseEntity<Object> notFound(@Nullable String path) {
     return createEntity(HttpStatus.NOT_FOUND, true, new NotFoundData("Resource not found", path));
   }

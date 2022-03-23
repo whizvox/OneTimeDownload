@@ -4,6 +4,9 @@
 <body>
 <header th:replace="fragments/common :: header"></header>
 <main class="container">
+  <div id="upload-alert" class="mb-3 alert" hidden>
+    Could not upload file: <span id="upload-alert-code" class="fw-bold"></span> <span id="upload-alert-message" class="fst-italic"></span>
+  </div>
   <form id="upload-file">
     <div class="text-center justify-content-center mb-3">
       <label for="file">

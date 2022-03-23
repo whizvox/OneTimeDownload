@@ -1,3 +1,6 @@
+let uploadAlert = $('#upload-alert');
+let alertCode = $('#upload-alert-code');
+let alertMessage = $('#upload-alert-message');
 let submitButton = $(':submit');
 let dropZone = $('#file-upload-dropzone');
 let fileNameText = $('#file-upload-filename');
@@ -52,6 +55,8 @@ $('#password-confirm').change(function() {
 
 submitButton.on('click', function(e) {
   e.preventDefault();
+  uploadAlert.attr('hidden', true);
+  uploadAlert.removeClass('alert-warning', 'alert-danger');
   $(this).attr('disabled', true);
   $(this).text('Uploading...');
   let formData = new FormData($('#upload-file')[0]);
@@ -69,6 +74,20 @@ submitButton.on('click', function(e) {
       $(location).attr('href', '/view/' + data.data.id);
     },
     error: function(xhr, status, error) {
+      uploadAlert.attr('hidden', false);
+      alertCode.text(xhr.status + " " + error);
+      if (xhr.status === 400) {
+        uploadAlert.addClass('alert-warning');
+      } else {
+        uploadAlert.addClass('alert-danger');
+      }
+      if (xhr.responseJSON) {
+        alertMessage.text(xhr.responseJSON.data.message);
+      } else {
+        alertMessage.text(xhr.response);
+      }
+      submitButton.attr('disabled', false);
+      submitButton.text('Submit');
     }
   })
 });

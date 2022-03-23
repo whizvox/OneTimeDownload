@@ -4,6 +4,7 @@ import me.whizvox.otdl.exception.InvalidLifespanException;
 import me.whizvox.otdl.exception.NoFileException;
 import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.SecurityService;
+import me.whizvox.otdl.user.User;
 import me.whizvox.otdl.util.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -140,14 +142,36 @@ public class FileController {
   }
 
   @PostMapping
-  public ResponseEntity<Object> upload(@RequestParam(required = false) MultipartFile file, @RequestParam(required = false) String password, @RequestParam(defaultValue = "60") int lifespan) {
+  public ResponseEntity<Object> upload(@RequestParam(required = false) MultipartFile file,
+                                       @RequestParam(required = false) String password,
+                                       @RequestParam(defaultValue = "60") int lifespan,
+                                       @AuthenticationPrincipal User user) {
     if (password == null) {
       return ApiResponse.badRequest("Missing password parameter");
     }
-    // TODO Integrate member file restrictions
-    if (file != null && file.getSize() > config.getMaxFileSizeAnonymous()) {
-      return ApiResponse.badRequest("File too big, max " + config.getMaxFileSizeAnonymous() + " B");
+    long maxSizeAllowed = 0;
+    if (user == null) {
+      maxSizeAllowed = config.getMaxFileSizeAnonymous();
+    } else {
+      switch (user.getGroup()) {
+        case USER -> maxSizeAllowed = switch (user.getRank()) {
+          case ANONYMOUS -> config.getMaxFileSizeAnonymous();
+          case MEMBER -> config.getMaxFileSizeMember();
+          case CONTRIBUTOR -> Long.MAX_VALUE;
+        };
+        case ADMIN -> maxSizeAllowed = Long.MAX_VALUE;
+      }
     }
+    if (maxSizeAllowed == 0) {
+      return ApiResponse.forbidden("User is restricted, cannot upload files");
+    }
+    if (file == null) {
+      return ApiResponse.badRequest("Missing file");
+    }
+    if (file.getSize() > maxSizeAllowed) {
+      return ApiResponse.badRequest("File size too large, max " + maxSizeAllowed + " B");
+    }
+
     char[] pwdArr = decodePassword(password);
     if (pwdArr != null) {
       try {
