@@ -12,4 +12,6 @@ public class Page {
 
   private String lang;
 
+  private String user;
+
 }

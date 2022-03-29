@@ -5,6 +5,73 @@ function encodeUTF8ToBase64(str) {
       .replace(/=+$/, '');
 }
 
+function formatDigitalLength(n) {
+  if (n < 1000) {
+    return n + " B";
+  }
+  const suffixes = ["KB", "MB", "GB", "TB", "EB", "ZB", "YB"];
+  let i = 0;
+  while (n > 1000000 && i < suffixes.length - 1) {
+    n = Math.floor(n / 1000);
+    i++;
+  }
+  return Math.floor(n / 1000) + "." + Math.floor((n % 1000) / 100) + " " + suffixes[i];
+}
+
+function disableElement(elem) {
+  elem.attr('disabled', true);
+}
+
+function enableElement(elem) {
+  elem.attr('disabled', false);
+}
+
+function hideElement(elem) {
+  elem.attr('hidden', true);
+}
+
+function showElement(elem) {
+  elem.attr('hidden', false);
+}
+
+function formatRelativeTime(date) {
+  let delta = Math.floor((date.valueOf() - new Date().valueOf()) / 1000);
+  let after = delta > 0;
+  delta = Math.abs(delta);
+  let seconds = delta % 60;
+  let minutes = Math.floor(delta / 60) % 60;
+  let hours = Math.floor(delta / 3600) % 24;
+  let days = Math.floor(delta / 86400);
+  let res = "";
+  if (days > 0) {
+    res += days + " day";
+    if (days > 1) {
+      res += "s";
+    }
+  } else if (hours > 0) {
+    res += hours + " hour";
+    if (hours !== 1) {
+      res += "s";
+    }
+  } else if (minutes > 0) {
+    res += minutes + " minute";
+    if (minutes !== 1) {
+      res += "s";
+    }
+  } else {
+    res += seconds + " second";
+    if (seconds !== 1) {
+      res += "s";
+    }
+  }
+  if (after) {
+    res += " from now";
+  } else {
+    res += " ago";
+  }
+  return res;
+}
+
 function getCSRFHeader() {
   let res = {};
   res[$("meta[name='_csrf_header']").attr("content")] = $("meta[name='_csrf']").attr("content");

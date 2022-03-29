@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html th:lang="${page.lang}" lang="en">
+<head th:replace="fragments/common :: head">
+  <title>Control files</title>
+</head>
+<body>
+<header th:replace="fragments/common :: header"></header>
+<main class="container">
+  <p id="error-message" class="alert alert-danger" hidden></p>
+  <form id="form-view-files" class="mb-3">
+    <div class="mb-3">
+      <label for="files-filename" class="form-label">File name query</label>
+      <input type="text" id="files-filename" name="fileName" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">When uploaded</label>
+      <div class="input-group">
+        <span class="input-group-text">After</span>
+        <input type="datetime-local" name="uploadedAfter" class="form-control">
+        <span class="input-group-text">Before</span>
+        <input type="datetime-local" name="uploadedBefore" class="form-control">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Size (bytes)</label>
+      <div class="input-group">
+        <span class="input-group-text">Larger than</span>
+        <input type="number" name="minSize" class="form-control">
+        <span class="input-group-text">Smaller than</span>
+        <input type="number" name="maxSize" class="form-control">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="files-downloaded" class="form-label">Downloaded</label>
+      <select id="files-downloaded" class="form-select" name="downloaded">
+        <option value="" selected>(Any)</option>
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-info">Search</button>
+  </form>
+  <p class="alert alert-secondary" id="no-results" hidden>No results found</p>
+  <div id="results-files" hidden>
+    <div id="update-buttons" class="mb-3 float-end">
+      <button type="button" id="btn-edit-file" class="btn btn-warning">Edit</button>
+      <button type="button" id="btn-delete-file" class="btn btn-danger">Delete</button>
+    </div>
+    <table id="table-files" class="table">
+      <thead>
+        <tr class="table-dark">
+          <td><input type="checkbox" id="select-all-files"></td>
+          <td>ID</td>
+          <td>File name</td>
+          <td>Uploaded</td>
+          <td>Size</td>
+          <td>Expires</td>
+          <td>Downloaded</td>
+          <td>User</td>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script src="/js/control_files.js"></script>
+</main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
+</html>

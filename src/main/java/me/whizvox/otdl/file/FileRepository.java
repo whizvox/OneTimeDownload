@@ -1,11 +1,13 @@
 package me.whizvox.otdl.file;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.util.List;
 
-public interface FileRepository extends CrudRepository<FileInfo, String> {
+public interface FileRepository extends PagingAndSortingRepository<FileInfo, String>, JpaSpecificationExecutor<FileInfo> {
 
   @Query("SELECT info FROM FileInfo info WHERE info.expires < current_timestamp")
   List<FileInfo> findAllExpired();

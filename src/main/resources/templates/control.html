@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${page.lang}">
+<head th:replace="fragments/common :: head">
+  <meta charset="UTF-8">
+  <title>Control panel</title>
+</head>
+<body class="container">
+<header th:replace="fragments/common :: header"></header>
+<main class="container">
+  <h1>Control panel</h1>
+  <p class="alert alert-danger">These settings can drastically and irrevocably change the site. Use them at your own
+    risk!</p>
+  <div class="d-flex flex-row">
+    <a href="/control/files" class="p-3">
+      <div class="card control-card">
+        <div class="card-body">
+          <h5 class="card-title">Files</h5>
+          <h6 class="card-subtitle">View, edit, and delete uploaded file records</h6>
+        </div>
+      </div>
+    </a>
+    <a href="#" class="p-3">
+      <div class="card control-card">
+        <div class="card-body">
+          <h5 class="card-title">Users</h5>
+          <h6 class="card-subtitle">View, promote, demote, and delete users</h6>
+        </div>
+      </div>
+    </a>
+    <a href="#" class="p-3">
+      <div class="card card-control">
+        <div class="card-body">
+          <h5 class="card-title">Server</h5>
+          <h6 class="card-subtitle">Modify backend server settings</h6>
+        </div>
+      </div>
+    </a>
+  </div>
+  <script src="/js/control.js"></script>
+</main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
+</html>

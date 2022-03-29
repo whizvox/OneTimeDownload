@@ -10,13 +10,17 @@ public class FileConfiguration {
 
   private String tempDirectoryLocation = "temp";
 
-  private int maxLifespanAnonymous = 60;
+  private int maxLifespanAnonymous = 30;
 
-  private int maxLifespanMember = 1440;
+  private int maxLifespanMember = 720;
 
-  private int maxFileSizeAnonymous = 10000000;
+  private int maxLifespanContributor = 14400;
 
-  private long maxFileSizeMember = 250000000;
+  private int maxFileSizeAnonymous = 50000000;
+
+  private long maxFileSizeMember = 350000000;
+
+  private long maxFileSizeContributor = 2000000000;
 
   private long lifespanAfterAccess = 15;
 

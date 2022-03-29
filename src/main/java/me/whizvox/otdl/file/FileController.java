@@ -6,10 +6,21 @@ import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.SecurityService;
 import me.whizvox.otdl.user.User;
 import me.whizvox.otdl.util.ApiResponse;
+import me.whizvox.otdl.util.PagedResponseData;
+import net.kaczmarzyk.spring.data.jpa.domain.Equal;
+import net.kaczmarzyk.spring.data.jpa.domain.GreaterThanOrEqual;
+import net.kaczmarzyk.spring.data.jpa.domain.LessThanOrEqual;
+import net.kaczmarzyk.spring.data.jpa.domain.LikeIgnoreCase;
+import net.kaczmarzyk.spring.data.jpa.web.annotation.And;
+import net.kaczmarzyk.spring.data.jpa.web.annotation.Spec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
@@ -149,17 +159,33 @@ public class FileController {
     if (password == null) {
       return ApiResponse.badRequest("Missing password parameter");
     }
+    int maxLifespanAllowed = 0;
     long maxSizeAllowed = 0;
     if (user == null) {
+      maxLifespanAllowed = config.getMaxLifespanAnonymous();
       maxSizeAllowed = config.getMaxFileSizeAnonymous();
     } else {
       switch (user.getGroup()) {
-        case USER -> maxSizeAllowed = switch (user.getRank()) {
-          case ANONYMOUS -> config.getMaxFileSizeAnonymous();
-          case MEMBER -> config.getMaxFileSizeMember();
-          case CONTRIBUTOR -> Long.MAX_VALUE;
-        };
-        case ADMIN -> maxSizeAllowed = Long.MAX_VALUE;
+        case USER -> {
+          switch (user.getRank()) {
+            case ANONYMOUS -> {
+              maxLifespanAllowed = config.getMaxLifespanAnonymous();
+              maxSizeAllowed = config.getMaxFileSizeAnonymous();
+            }
+            case MEMBER -> {
+              maxLifespanAllowed = config.getMaxLifespanMember();
+              maxSizeAllowed = config.getMaxFileSizeMember();
+            }
+            case CONTRIBUTOR -> {
+              maxLifespanAllowed = config.getMaxLifespanContributor();
+              maxSizeAllowed = config.getMaxFileSizeContributor();
+            }
+          }
+        }
+        case ADMIN -> {
+          maxLifespanAllowed = Integer.MAX_VALUE;
+          maxSizeAllowed = Long.MAX_VALUE;
+        }
       }
     }
     if (maxSizeAllowed == 0) {
@@ -167,6 +193,9 @@ public class FileController {
     }
     if (file == null) {
       return ApiResponse.badRequest("Missing file");
+    }
+    if (lifespan > maxLifespanAllowed) {
+      return ApiResponse.badRequest("Lifespan too large, max " + maxLifespanAllowed + " min");
     }
     if (file.getSize() > maxSizeAllowed) {
       return ApiResponse.badRequest("File size too large, max " + maxSizeAllowed + " B");
@@ -212,6 +241,23 @@ public class FileController {
     }
     // intentionally return false positives in the event of an unknown ID or wrong password
     return ApiResponse.ok();
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<Object> search(
+      @And({
+          @Spec(params = "fileName", path = "fileName", spec = LikeIgnoreCase.class),
+          @Spec(params = "uploadedAfter", path = "uploaded", spec = GreaterThanOrEqual.class),
+          @Spec(params = "uploadedBefore", path = "uploaded", spec = LessThanOrEqual.class),
+          @Spec(params = "minSize", path = "originalSize", spec = GreaterThanOrEqual.class),
+          @Spec(params = "maxSize", path = "originalSize", spec = LessThanOrEqual.class),
+          @Spec(params = "downloaded", path = "downloaded", spec = Equal.class)
+      }) Specification<FileInfo> spec,
+      Pageable pageable) {
+    if (pageable.getSort() == Sort.unsorted()) {
+      pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.Direction.DESC, "uploaded");
+    }
+    return ApiResponse.ok(new PagedResponseData<>(files.search(spec, pageable)));
   }
 
 }

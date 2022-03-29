@@ -14,6 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -104,7 +107,7 @@ public class FileService {
     if (file == null) {
       throw new NoFileException();
     }
-    if (lifespan < 1 || lifespan > config.getMaxLifespanMember()) {
+    if (lifespan < 1) {
       throw new InvalidLifespanException(lifespan);
     }
     Path encPath = tempDir.resolve(UUID.randomUUID().toString());
@@ -203,6 +206,10 @@ public class FileService {
       return expiredFiles.size();
     }
     return 0;
+  }
+
+  public Page<FileInfo> search(Specification<FileInfo> spec, Pageable pageable) {
+    return repo.findAll(spec, pageable);
   }
 
 }

@@ -2,9 +2,9 @@ package me.whizvox.otdl.file;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.whizvox.otdl.user.User;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,5 +31,9 @@ public class FileInfo {
   private LocalDateTime expires;
 
   private boolean downloaded;
+
+  @OneToOne(targetEntity = User.class, fetch = FetchType.EAGER)
+  @JoinColumn(name = "user_id")
+  private User user;
 
 }
