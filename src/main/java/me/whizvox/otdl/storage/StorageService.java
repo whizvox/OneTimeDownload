@@ -12,4 +12,6 @@ public interface StorageService {
 
   void delete(String path);
 
+  void delete(Iterable<String> paths);
+
 }

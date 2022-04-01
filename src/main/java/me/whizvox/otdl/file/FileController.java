@@ -2,8 +2,10 @@ package me.whizvox.otdl.file;
 
 import me.whizvox.otdl.exception.InvalidLifespanException;
 import me.whizvox.otdl.exception.NoFileException;
+import me.whizvox.otdl.exception.UnknownIdException;
 import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.SecurityService;
+import me.whizvox.otdl.storage.StorageException;
 import me.whizvox.otdl.user.User;
 import me.whizvox.otdl.util.ApiResponse;
 import me.whizvox.otdl.util.PagedResponseData;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,8 +36,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -154,7 +159,7 @@ public class FileController {
   @PostMapping
   public ResponseEntity<Object> upload(@RequestParam(required = false) MultipartFile file,
                                        @RequestParam(required = false) String password,
-                                       @RequestParam(defaultValue = "60") int lifespan,
+                                       @RequestParam(defaultValue = "30") int lifespan,
                                        @AuthenticationPrincipal User user) {
     if (password == null) {
       return ApiResponse.badRequest("Missing password parameter");
@@ -243,7 +248,7 @@ public class FileController {
     return ApiResponse.ok();
   }
 
-  @GetMapping("/search")
+  @GetMapping("search")
   public ResponseEntity<Object> search(
       @And({
           @Spec(params = "fileName", path = "fileName", spec = LikeIgnoreCase.class),
@@ -258,6 +263,45 @@ public class FileController {
       pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.Direction.DESC, "uploaded");
     }
     return ApiResponse.ok(new PagedResponseData<>(files.search(spec, pageable)));
+  }
+
+  @PutMapping("{id}")
+  public ResponseEntity<Object> update(
+      @PathVariable String id,
+      @RequestParam(required = false) String fileName,
+      // TODO Figure out how to properly set date time format globally
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime expires,
+      @RequestParam(required = false) Boolean downloaded) {
+    return files.getInfo(id).map(file -> {
+      if (fileName != null) {
+        file.setFileName(fileName);
+      }
+      if (expires != null) {
+        file.setExpires(expires);
+      }
+      if (downloaded != null) {
+        file.setDownloaded(downloaded);
+      }
+      try {
+        files.update(file);
+        return ApiResponse.ok();
+      } catch (UnknownIdException e) {
+        return ApiResponse.notFound(id);
+      }
+    }).orElse(ApiResponse.notFound(id));
+  }
+
+  @PostMapping("/delete")
+  public ResponseEntity<Object> deleteBulk(@RequestParam String[] ids) {
+    if (ids != null && ids.length > 0) {
+      try {
+        files.delete(List.of(ids));
+      } catch (StorageException e) {
+        LOG.error("Could not bulk delete files", e);
+        return ApiResponse.internalServerError("Could not bulk delete files");
+      }
+    }
+    return ApiResponse.ok();
   }
 
 }

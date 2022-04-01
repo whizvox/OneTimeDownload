@@ -33,7 +33,6 @@ public class FileServiceTests {
   private final FileRepository repo;
   private final FileService files;
 
-  private final int maxLifespan;
   private final Path rootDir;
 
   @Autowired
@@ -41,7 +40,6 @@ public class FileServiceTests {
     this.repo = repo;
     this.files = files;
 
-    maxLifespan = config.getMaxLifespanMember();
     rootDir = Paths.get("files").toAbsolutePath();
 
     //files.upload(new MockMultipartFile("test.txt", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.".getBytes(StandardCharsets.UTF_8)), "password123".toCharArray());
@@ -173,16 +171,6 @@ public class FileServiceTests {
   @Test
   void upload_givenNegativeLifespan_thenThrow() {
     assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), -1, "password123".toCharArray()));
-  }
-
-  @Test
-  void upload_givenMaxLifespan_thenSuccess() {
-    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), maxLifespan, "password123".toCharArray()));
-  }
-
-  @Test
-  void upload_givenOverMaxLifespan_thenSuccess() {
-    assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), maxLifespan + 1, "password123".toCharArray()));
   }
 
   @Test

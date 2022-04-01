@@ -17,33 +17,38 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
   private final UserService users;
   private final PasswordEncoder passwordEncoder;
   private final ObjectMapper objectMapper;
+  private final SecurityConfiguration config;
 
   @Autowired
-  public WebSecurityConfiguration(UserService users, PasswordEncoder passwordEncoder, ObjectMapper objectMapper) {
+  public WebSecurityConfiguration(UserService users, PasswordEncoder passwordEncoder, ObjectMapper objectMapper, SecurityConfiguration config) {
     this.users = users;
     this.passwordEncoder = passwordEncoder;
     this.objectMapper = objectMapper;
+    this.config = config;
   }
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
-    http.authorizeRequests()
+    var csrf = http.authorizeRequests()
         .antMatchers("/debug/**", "/control/**").hasRole("ADMIN")
-        .anyRequest()
+            .anyRequest()
             .permitAll()
             .and()
         .formLogin()
             .loginPage("/login")
             .defaultSuccessUrl("/")
             .and()
-        .csrf()
-            .and()
         .logout()
             .logoutUrl("/logout")
             .logoutSuccessHandler((request, response, authentication) -> {
               response.setContentType(MimeTypeUtils.APPLICATION_JSON.toString());
               objectMapper.writeValue(response.getWriter(), ApiResponse.ok());
-            });
+            })
+        .and()
+            .csrf();
+    if (!config.isEnableCsrf()) {
+      csrf.disable();
+    }
   }
 
   @Autowired

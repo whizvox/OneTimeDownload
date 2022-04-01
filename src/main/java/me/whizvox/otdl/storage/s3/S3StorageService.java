@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -16,6 +15,8 @@ import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @ConditionalOnProperty(
@@ -76,6 +77,20 @@ public class S3StorageService implements StorageService {
   @Override
   public void delete(String path) {
     s3.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(path).build());
+  }
+
+  @Override
+  public void delete(Iterable<String> paths) {
+    s3.deleteObjects(DeleteObjectsRequest.builder()
+        .bucket(bucketName)
+        .delete(Delete.builder()
+            .objects(StreamSupport.stream(paths.spliterator(), false)
+                .map(path -> ObjectIdentifier.builder()
+                    .key(path)
+                    .build())
+                .collect(Collectors.toSet()))
+            .build())
+        .build());
   }
 
 }

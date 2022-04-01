@@ -275,7 +275,7 @@ class FileControllerTests {
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
                 .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
                 .param("password", "cGFzc3dvcmQxMjM")
-                .param("lifespan", Integer.toString(config.getMaxLifespanMember())))
+                .param("lifespan", Integer.toString(config.getMaxLifespanAnonymous())))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -305,16 +305,6 @@ class FileControllerTests {
             status().isBadRequest(),
             content().contentType(MediaType.APPLICATION_JSON),
             content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Bad lifespan: -1 minutes\"}}")
-        );
-    mvc.perform(MockMvcRequestBuilders.multipart("/files")
-                .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
-                .param("password", "cGFzc3dvcmQxMjM")
-                .param("lifespan", Integer.toString(config.getMaxLifespanMember() + 1)))
-        .andDo(print())
-        .andExpectAll(
-            status().isBadRequest(),
-            content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Bad lifespan: " + (config.getMaxLifespanMember() + 1) + " minutes\"}}")
         );
   }
 

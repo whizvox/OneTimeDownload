@@ -62,12 +62,8 @@ public class DebugController implements ApplicationContextAware {
     LOG.info("Deleting {} files...", fileRepo.count());
     AtomicInteger count = new AtomicInteger(0);
     fileRepo.findAll().forEach(info -> {
-      try {
         files.delete(info.getId());
         count.incrementAndGet();
-      } catch (IOException e) {
-        throw new OTDLServiceException(e);
-      }
     });
     return ApiResponse.ok(count.get());
   }

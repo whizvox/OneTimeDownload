@@ -1,9 +1,6 @@
 package me.whizvox.otdl.file;
 
-import me.whizvox.otdl.exception.FileMismatchException;
-import me.whizvox.otdl.exception.InvalidLifespanException;
-import me.whizvox.otdl.exception.NoFileException;
-import me.whizvox.otdl.exception.WrongPasswordException;
+import me.whizvox.otdl.exception.*;
 import me.whizvox.otdl.security.ComboAuthToken;
 import me.whizvox.otdl.security.SecurityService;
 import me.whizvox.otdl.storage.InputFile;
@@ -31,10 +28,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.HexFormat;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class FileService {
@@ -183,13 +177,17 @@ public class FileService {
   /**
    * Deletes a specified file.
    * @param id The ID of the file to delete
-   * @throws IOException Could not delete the file from the file system
    */
-  public void delete(String id) throws IOException {
+  public void delete(String id) {
     if (repo.existsById(id)) {
       repo.deleteById(id);
       storage.delete(id);
     }
+  }
+
+  public void delete(Iterable<String> ids){
+    repo.deleteAllById(ids);
+    storage.delete(ids);
   }
 
   public int deleteExpiredFiles() {
@@ -210,6 +208,13 @@ public class FileService {
 
   public Page<FileInfo> search(Specification<FileInfo> spec, Pageable pageable) {
     return repo.findAll(spec, pageable);
+  }
+
+  public void update(FileInfo file) {
+    if (!repo.existsById(file.getId())) {
+      throw new UnknownIdException();
+    }
+    repo.save(file);
   }
 
 }
