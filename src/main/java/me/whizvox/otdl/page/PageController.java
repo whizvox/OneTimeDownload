@@ -1,17 +1,14 @@
 package me.whizvox.otdl.page;
 
 import me.whizvox.otdl.exception.TokenDoesNotExistException;
-import me.whizvox.otdl.file.FileInfo;
 import me.whizvox.otdl.file.FileService;
 import me.whizvox.otdl.user.User;
 import me.whizvox.otdl.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,11 +44,11 @@ public class PageController {
 
   @GetMapping("/view/{fileId}")
   public ModelAndView view(@PathVariable String fileId, @AuthenticationPrincipal User user) {
-    FileInfo info = files.getInfo(fileId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-    return new ModelAndView("view")
+    ModelAndView mav = new ModelAndView("view")
         .addObject("page", createStandardPage("View file", "/view"))
-        .addObject("file", new ViewPageFileInfo(info))
         .addObject("user", user);
+    files.getInfo(fileId).ifPresent(file -> mav.addObject(new ViewPageFileInfo(file)));
+    return mav;
   }
 
   @GetMapping("/download/{fileId}")

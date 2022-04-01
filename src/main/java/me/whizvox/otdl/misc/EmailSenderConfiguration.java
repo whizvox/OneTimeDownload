@@ -36,7 +36,7 @@ public class EmailSenderConfiguration {
   @Value("${otdl.email.start-tls:true}")
   private boolean startTLS;
 
-  @Value("${otdl.email.ssl.trust:#{null}}")
+  @Value("${otdl.email.ssl.trust:${otdl.email.host:#{null}}}")
   private String sslTrustHost;
 
   @Bean

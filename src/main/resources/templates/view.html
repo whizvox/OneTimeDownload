@@ -4,24 +4,29 @@
 <body>
 <header th:replace="fragments/common :: header"></header>
 <main class="container">
-  <div class="row row-cols-2 mb-3">
-    <div class="col fw-bold">ID</div>
-    <div class="col" id="file-id" th:text="${file.id}"></div>
-    <div class="col fw-bold">File Name</div>
-    <div class="col" th:text="${file.fileName}"></div>
-    <div class="col fw-bold">Original Size</div>
-    <div class="col" th:text="${file.originalSize}"></div>
-    <div class="col fw-bold">Upload Timestamp</div>
-    <div class="col" id="file-uploaded" th:text="${file.uploaded}"></div>
-    <div class="col fw-bold">Expires In</div>
-    <div class="col" th:text="${file.expiresIn}"></div>
-    <div class="col fw-bold">Downloaded</div>
-    <div class="col" th:text="${file.downloaded} ? 'Yes' : 'No'"></div>
+  <!--/*@thymesVar id="file" type="me.whizvox.otdl.page.ViewPageFileInfo"*/-->
+  <div id="view-file" th:if="${file}">
+    <div class="row row-cols-2 mb-3">
+      <div class="col fw-bold">ID</div>
+      <div class="col" id="file-id" th:text="${file.id}"></div>
+      <div class="col fw-bold">File Name</div>
+      <div class="col" th:text="${file.fileName}"></div>
+      <div class="col fw-bold">Original Size</div>
+      <div class="col" th:text="${file.originalSize}"></div>
+      <div class="col fw-bold">Upload Timestamp</div>
+      <div class="col" id="file-uploaded" th:text="${file.uploaded}"></div>
+      <div class="col fw-bold">Expires In</div>
+      <div class="col" th:text="${file.expiresIn}"></div>
+      <div class="col fw-bold">Downloaded</div>
+      <div class="col" th:text="${file.downloaded} ? 'Yes' : 'No'"></div>
+    </div>
+    <div class="alert alert-info mt-3">
+      <p class="mb-0">Download link: <code id="download-link-noclick">Waiting...</code> <button type="button" class="btn btn-outline-secondary" id="btn-copy-link">Copy to clipboard</button></p>
+    </div>
   </div>
-  <div class="alert alert-info mt-3">
-    <p class="mb-0">Download link: <code id="download-link-noclick">Waiting...</code> <button type="button" class="btn btn-outline-secondary" id="btn-copy-link">Copy to clipboard</button></p>
+  <div id="file-not-found" th:if="!${file}">
+    <h3 class="alert alert-warning text-center">Could not access file information.</h3>
   </div>
-  <script src="/js/view.js"></script>
 </main>
 <footer th:replace="fragments/common :: footer"></footer>
 </body>
