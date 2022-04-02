@@ -26,12 +26,20 @@ function enableElement(elem) {
   elem.attr('disabled', false);
 }
 
+function isDisabled(elem) {
+  return elem.attr('disabled');
+}
+
 function hideElement(elem) {
   elem.attr('hidden', true);
 }
 
 function showElement(elem) {
   elem.attr('hidden', false);
+}
+
+function isHidden(elem) {
+  return elem.attr('hidden');
 }
 
 function formatRelativeTime(date) {
@@ -68,6 +76,33 @@ function formatRelativeTime(date) {
     res += " from now";
   } else {
     res += " ago";
+  }
+  return res;
+}
+
+function formatDuration(seconds) {
+  let sec = seconds % 60;
+  let min = Math.floor(seconds / 60) % 60;
+  let hrs = Math.floor(seconds / 3600) % 24;
+  let days = Math.floor(seconds / 86400);
+  let res = "";
+  if (days > 0) {
+    res += days + "d";
+  }
+  if (hrs > 0) {
+    if (res.length > 0) {
+      res += " ";
+    }
+    res += hrs + "h";
+  }
+  if (min > 0) {
+    if (res.length > 0) {
+      res += " ";
+    }
+    res += min + "m";
+  }
+  if (sec > 0 || res.length === 0) {
+    res += sec + "s";
   }
   return res;
 }

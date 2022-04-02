@@ -7,8 +7,21 @@
 <header th:replace="fragments/common :: header"></header>
 <main class="container">
   <h1 class="mb-3">Log in</h1>
-  <p th:if="${#request.getParameter('confirmed')}" class="alert alert-info">
+  <p th:if="${param.confirmed}" class="alert alert-success alert-dismissible">
     Thank you for confirming your account. You may log in now.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </p>
+  <p th:if="${param.error}" class="alert alert-danger alert-dismissible">
+    Something went wrong trying to log in
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </p>
+  <p th:if="${param.invalid}" class="alert alert-warning alert-dismissible">
+    Email or password is invalid
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </p>
+  <p th:if="${param.unverified}" class="alert alert-warning alert-dismissible">
+    Email has not yet been verified
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </p>
   <form id="form-login" method="post" th:action="@{/login}">
     <div class="mb-3">

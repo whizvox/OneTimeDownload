@@ -47,7 +47,7 @@ public class PageController {
     ModelAndView mav = new ModelAndView("view")
         .addObject("page", createStandardPage("View file", "/view"))
         .addObject("user", user);
-    files.getInfo(fileId).ifPresent(file -> mav.addObject(new ViewPageFileInfo(file)));
+    files.getInfo(fileId).ifPresent(file -> mav.addObject("file", new ViewPageFileInfo(file)));
     return mav;
   }
 

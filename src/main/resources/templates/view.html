@@ -23,8 +23,9 @@
     <div class="alert alert-info mt-3">
       <p class="mb-0">Download link: <code id="download-link-noclick">Waiting...</code> <button type="button" class="btn btn-outline-secondary" id="btn-copy-link">Copy to clipboard</button></p>
     </div>
+    <script src="/js/view.js"></script>
   </div>
-  <div id="file-not-found" th:if="!${file}">
+  <div id="file-not-found" th:unless="${file}">
     <h3 class="alert alert-warning text-center">Could not access file information.</h3>
   </div>
 </main>

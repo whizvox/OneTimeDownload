@@ -5,7 +5,24 @@ let submitButton = $(':submit');
 let dropZone = $('#file-upload-dropzone');
 let fileNameText = $('#file-upload-filename');
 let fileField = $('#file');
+let fileInvalid = $('#file-invalid');
 let passwordField = $('#password');
+let passwordConfirmField = $('#password-confirm');
+let passwordConfirmInvalid = $('#password-confirm-invalid');
+let lifespanField = $('#lifespan');
+let lifespanValue = $('#lifespan-value');
+
+function updateSubmitButton() {
+  let valid =
+      fileField[0].files.length > 0 &&
+      passwordField.val() === passwordConfirmField.val() &&
+      (lifespanField.val() === undefined || lifespanField.val() > 0);
+  if (valid) {
+    enableElement(submitButton);
+  } else {
+    disableElement(submitButton);
+  }
+}
 
 dropZone
     .hover(function() {
@@ -33,24 +50,54 @@ dropZone
           .removeClass('text-muted')
           .text(files[0].name);
       fileField.prop('files', files);
+      updateSubmitButton();
     });
 
 fileField.change(function(e) {
-  fileNameText
-      .removeClass('text-muted')
-      .text(e.target.files[0].name);
+  let fileList = e.target.files;
+  if (fileList.length > 0) {
+    fileNameText
+        .removeClass('text-muted')
+        .text(fileList[0].name);
+    hideElement(fileInvalid);
+  } else {
+    fileNameText
+        .addClass('text-muted')
+        .text('Click or drag and drop');
+    showElement(fileInvalid);
+  }
+  updateSubmitButton();
 });
 
-$('#password-confirm').change(function() {
-  let mismatch = passwordField.val() !== $(this).val();
+function validatePasswordConfirmField() {
+  let mismatch = passwordField.val() !== passwordConfirmField.val();
   submitButton.prop('disabled', mismatch);
   if (mismatch) {
-    $(this).removeClass('is-valid');
-    $(this).addClass('is-invalid');
+    passwordConfirmField.removeClass('is-valid');
+    passwordConfirmField.addClass('is-invalid');
+    showElement(passwordConfirmInvalid);
   } else {
-    $(this).removeClass('is-invalid');
-    $(this).addClass('is-valid');
+    passwordConfirmField.removeClass('is-invalid');
+    passwordConfirmField.addClass('is-valid');
+    hideElement(passwordConfirmInvalid);
   }
+  updateSubmitButton();
+}
+
+passwordField.on('input', function() {
+  validatePasswordConfirmField();
+});
+
+passwordConfirmField.on('input', function() {
+  validatePasswordConfirmField();
+});
+
+function updateLifespanValueFormat() {
+  lifespanValue.text(formatDuration(lifespanField.val() * 60));
+}
+
+lifespanField.on('input', function() {
+  updateLifespanValueFormat();
 });
 
 submitButton.on('click', function(e) {
@@ -90,4 +137,9 @@ submitButton.on('click', function(e) {
       submitButton.text('Submit');
     }
   })
+});
+
+$(document).ready(function() {
+  updateLifespanValueFormat();
+  updateSubmitButton();
 });

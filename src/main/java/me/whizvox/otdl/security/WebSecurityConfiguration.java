@@ -29,14 +29,16 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
-    var csrf = http.authorizeRequests()
-        .antMatchers("/debug/**", "/control/**").hasRole("ADMIN")
+    HttpSecurity security = http.authorizeRequests()
+        .antMatchers("/debug/**", "/control/**")
+            .hasRole("ADMIN")
             .anyRequest()
             .permitAll()
             .and()
         .formLogin()
             .loginPage("/login")
             .defaultSuccessUrl("/")
+            .failureHandler(new OTDLLoginFailureHandler())
             .and()
         .logout()
             .logoutUrl("/logout")
@@ -44,10 +46,14 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
               response.setContentType(MimeTypeUtils.APPLICATION_JSON.toString());
               objectMapper.writeValue(response.getWriter(), ApiResponse.ok());
             })
-        .and()
-            .csrf();
-    if (!config.isEnableCsrf()) {
-      csrf.disable();
+            .and();
+    if (config.isEnableCsrf()) {
+      security = security.csrf().and();
+    } else {
+      security = security.csrf().disable();
+    }
+    if (config.isRememberMe()) {
+      security = security.rememberMe().and();
     }
   }
 

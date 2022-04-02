@@ -7,6 +7,9 @@
   <div id="upload-alert" class="mb-3 alert" hidden>
     Could not upload file: <span id="upload-alert-code" class="fw-bold"></span> <span id="upload-alert-message" class="fst-italic"></span>
   </div>
+  <h3 class="alert alert-warning alert-dismissible" th:if="${user != null && user.isLoggedIn() && !user.isEnabled()}">
+    Your email has not yet been verified.
+  </h3>
   <form id="upload-file">
     <div class="text-center justify-content-center mb-3">
       <label for="file">
@@ -14,6 +17,7 @@
         <p class="text-muted fs-4" id="file-upload-filename">Click or drag and drop</p>
       </label>
       <input type="file" id="file" name="file" hidden>
+      <div id="file-invalid" class="text-danger" hidden>Must select a file to upload</div>
     </div>
     <div class="mb-3">
       <label for="password" class="form-label">Password</label>
@@ -22,10 +26,17 @@
     <div class="mb-3">
       <label for="password-confirm" class="form-label">Confirm password</label>
       <input type="password" id="password-confirm" class="form-control">
+      <div id="password-confirm-invalid" class="invalid-feedback" hidden>Both passwords need to match</div>
     </div>
-    <input type="number" id="lifespan" name="lifespan" value="30" hidden>
+    <div class="mb-3" th:if="${user != null && user.isLoggedIn() && user.isEnabled() && user.getGroup().toString() != 'RESTRICTED'}">
+      <label for="lifespan" class="form-label">Lifespan (minutes)</label>
+      <input type="range" id="lifespan" name="lifespan" min="1" max="720" value="30" class="form-range" th:if="${user.group.toString() == 'USER' && user.rank.toString() == 'MEMBER'}">
+      <input type="range" id="lifespan" name="lifespan" min="1" max="14400" value="30" class="form-range" th:if="${user.group.toString() == 'USER' && user.rank.toString() == 'CONTRIBUTOR'}">
+      <span id="lifespan-value" th:if="${user.group.toString() == 'USER'}"></span>
+      <input type="number" id="lifespan" name="lifespan" min="1" value="30" class="form-control" th:if="${user.group.toString() == 'ADMIN'}">
+    </div>
     <div class="mb-3">
-      <button type="submit" class="btn btn-info text-white" disabled>Upload</button>
+      <button type="submit" class="btn btn-info text-white">Upload</button>
     </div>
   </form>
   <script src="/js/upload.js"></script>
