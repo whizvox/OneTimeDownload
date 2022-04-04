@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html th:lang="${page.lang}" lang="en">
+<head th:replace="fragments/common :: head">
+  <meta charset="UTF-8">
+  <title>Users control</title>
+</head>
+<body>
+<header th:replace="fragments/common :: header"></header>
+<main class="container">
+  <input type="hidden" id="self-user-id" th:value="${user.id}">
+
+  <h1>Users control panel</h1>
+  <p id="alert-error" class="alert alert-danger mb-3" hidden></p>
+
+  <form id="form-users" class="mb-3">
+    <div class="mb-3 form-floating">
+      <input type="text" id="id" name="id" class="form-control">
+      <label for="id">User ID</label>
+    </div>
+    <div class="mb-3 form-floating">
+      <input type="text" id="email" name="email" class="form-control">
+      <label for="email">Email address query</label>
+    </div>
+    <div class="mb-3 form-floating">
+      <select id="group" name="group" class="form-select">
+        <option value="" selected>Any</option>
+        <option value="USER">User</option>
+        <option value="ADMIN">Admin</option>
+        <option value="RESTRICTED">Restricted (currently unused)</option>
+      </select>
+      <label for="group">Group</label>
+    </div>
+    <div class="mb-3 form-floating">
+      <select id="rank" name="rank" class="form-select">
+        <option value="" selected>Any</option>
+        <option value="MEMBER">Member</option>
+        <option value="CONTRIBUTOR">Contributor (currently unused)</option>
+      </select>
+      <label for="rank">Rank</label>
+    </div>
+    <div class="mb-3 form-floating">
+      <select id="enabled" name="enabled" class="form-select">
+        <option value="" selected>Any</option>
+        <option value="false">No</option>
+        <option value="true">Yes</option>
+      </select>
+      <label for="enabled">Email verified</label>
+    </div>
+    <button type="submit" class="btn btn-info">Search</button>
+  </form>
+
+  <p id="no-results" class="alert alert-secondary" hidden>No results found</p>
+
+  <div id="results">
+    <div id="update-buttons" class="mb-3 float-end">
+      <button type="button" id="btn-edit" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modal-edit" disabled>Edit</button>
+      <button type="button" id="btn-delete" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modal-delete" disabled>Delete</button>
+    </div>
+    <table id="table-users" class="table">
+      <thead>
+      <tr class="table-dark">
+        <th><input type="checkbox" id="select-all"></th>
+        <th>ID</th>
+        <th>Email address</th>
+        <th>Rank</th>
+        <th>Group</th>
+        <th>Verified</th>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="modal-edit" class="modal fade" aria-describedby="modal-edit-user-title" data-bs-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-edit-user-title">Edit user</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="alert-edit" class="alert alert-danger alert-dismissible" hidden></p>
+          <form id="form-edit">
+            <div class="mb-3 form-floating">
+              <input type="text" id="edit-email" name="email" class="form-control">
+              <label for="edit-email">Email address</label>
+            </div>
+            <div class="mb-3 form-floating">
+              <select id="edit-rank" name="rank" class="form-select">
+                <option value="MEMBER">Member</option>
+                <option value="CONTRIBUTOR">Contributor</option>
+              </select>
+              <label for="edit-rank">Rank</label>
+            </div>
+            <div class="mb-3 form-floating">
+              <select id="edit-group" name="group" class="form-select">
+                <option value="RESTRICTED">Restricted</option>
+                <option value="USER">User</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+              <label for="edit-group">Group</label>
+            </div>
+            <div class="mb-3">
+              <input type="checkbox" id="edit-verified" name="enabled" class="form-check-input">
+              <label for="edit-verified" class="form-check-label">Email verified</label>
+            </div>
+            <div class="mb-3 form-floating">
+              <input type="password" id="edit-password" name="password" class="form-control">
+              <label for="edit-password">New password</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" form="form-edit" class="btn btn-warning" id="btn-edit-apply">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-delete" class="modal fade" aria-describedby="modal-delete-user-title" data-bs-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Delete user</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="alert-delete" class="alert alert-dismissible" hidden></p>
+          <p class="mb-3">Are you sure you want to delete the following users:</p>
+          <ul class="font-monospace"></ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" id="btn-delete-apply" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/control_users.js"></script>
+</main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
+</html>

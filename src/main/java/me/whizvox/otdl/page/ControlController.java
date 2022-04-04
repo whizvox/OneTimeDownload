@@ -24,4 +24,11 @@ public class ControlController {
         .addObject("page", PageUtils.createStandardPage("Control files", "/control/files", user));
   }
 
+  @GetMapping("users")
+  public ModelAndView users(@AuthenticationPrincipal User user) {
+    return new ModelAndView("control_users")
+        .addObject("page", PageUtils.createStandardPage("Control users", "/control/users", user))
+        .addObject("user", user);
+  }
+
 }

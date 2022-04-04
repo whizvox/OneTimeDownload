@@ -2,6 +2,9 @@ package me.whizvox.otdl.util;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class StringUtils {
 
@@ -76,6 +79,14 @@ public class StringUtils {
       return first.charAt(0) + "***" + first.substring(first.length() - 1) + "@" + words[1];
     }
     return "***@" + words[1];
+  }
+
+  public static String limitedJoin(Stream<String> strings, int max, String delimiter) {
+    List<String> list = strings.collect(Collectors.toList());
+    if (list.size() > max) {
+      return list.stream().limit(max).collect(Collectors.joining(delimiter)) + "... (" + (list.size() - max) + " more)";
+    }
+    return String.join(delimiter, list);
   }
 
 }

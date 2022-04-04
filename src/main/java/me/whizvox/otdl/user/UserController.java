@@ -4,10 +4,22 @@ import me.whizvox.otdl.exception.EmailTakenException;
 import me.whizvox.otdl.exception.InvalidPasswordException;
 import me.whizvox.otdl.exception.TokenDoesNotExistException;
 import me.whizvox.otdl.util.ApiResponse;
+import me.whizvox.otdl.util.PagedResponseData;
+import me.whizvox.otdl.util.RequestUtils;
+import me.whizvox.otdl.util.params.UpdateUserParameters;
+import net.kaczmarzyk.spring.data.jpa.domain.Equal;
+import net.kaczmarzyk.spring.data.jpa.domain.LikeIgnoreCase;
+import net.kaczmarzyk.spring.data.jpa.web.annotation.And;
+import net.kaczmarzyk.spring.data.jpa.web.annotation.Spec;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("users")
@@ -56,6 +68,45 @@ public class UserController {
     } catch (TokenDoesNotExistException e) {
       return ApiResponse.notFound(token);
     }
+  }
+
+  @PutMapping("{id}")
+  @PreAuthorize("@authorizationService.canAccessUserDetails(principal, #id)")
+  public ResponseEntity<Object> update(
+      @PathVariable Long id,
+      @RequestParam MultiValueMap<String, String> params) {
+    UpdateUserParameters newParams = new UpdateUserParameters();
+    newParams.setAll(params);
+    users.update(id, newParams);
+    return ApiResponse.ok();
+  }
+
+  @PreAuthorize("@authorizationService.hasPermission(principal, 'ADMIN')")
+  @GetMapping("search")
+  public ResponseEntity<Object> search(
+      @And(value = {
+          @Spec(params = "id", path = "id", spec = Equal.class),
+          @Spec(params = "email", path = "email", spec = LikeIgnoreCase.class),
+          @Spec(params = "rank", path = "rank", spec = Equal.class),
+          @Spec(params = "group", path = "group", spec = Equal.class),
+          @Spec(params = "enabled", path = "enabled", spec = Equal.class)
+      }) Specification<User> spec,
+      Pageable pageable) {
+    return ApiResponse.ok(
+        new PagedResponseData<>(
+            users.search(spec, RequestUtils.pageableWithDefaultSort(pageable, true, "id"))
+                .map(PublicUserDetails::new)
+        )
+    );
+  }
+
+  @PreAuthorize("@authorizationService.hasPermission(principal, 'ADMIN')")
+  @PostMapping
+  public ResponseEntity<Object> delete(@RequestParam(required = false) Long[] ids) {
+    if (ids != null && ids.length > 0) {
+      users.delete(List.of(ids));
+    }
+    return ApiResponse.ok();
   }
 
 }

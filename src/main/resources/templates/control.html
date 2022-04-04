@@ -10,31 +10,76 @@
   <h1>Control panel</h1>
   <p class="alert alert-danger">These settings can drastically and irrevocably change the site. Use them at your own
     risk!</p>
-  <div class="d-flex flex-row">
+  <div>
+    <h3>Files</h3>
+    <h4>Includes both file records stored in the database and actual files stored in the configured file system or
+    storage service.</h4>
+  </div>
+  <div class="d-flex flex-row mb-3">
+    <!--/*<a href="/control/files/overview" class="p-3">
+      <div class="card control-card">
+        <div class="card-body">
+          <h5 class="card-title">Overview</h5>
+        </div>
+      </div>
+    </a>*/-->
     <a href="/control/files" class="p-3">
       <div class="card control-card">
         <div class="card-body">
-          <h5 class="card-title">Files</h5>
-          <h6 class="card-subtitle">View, edit, and delete uploaded file records</h6>
+          <h5 class="card-title">Read, update, and delete</h5>
         </div>
       </div>
     </a>
-    <a href="#" class="p-3">
+    <div class="card control-card">
+      <div class="card-body">
+        <h5 class="card-title">Number of files</h5>
+        <h6 id="files-count"></h6>
+      </div>
+    </div>
+    <div class="card control-card">
+      <div class="card-body">
+        <h5 class="card-title">Storage used</h5>
+        <h6 id="files-storage-amount"></h6>
+      </div>
+    </div>
+  </div>
+  <div>
+    <h3>Users</h3>
+    <h4>Account details of users who have registered on the site</h4>
+  </div>
+  <div class="d-flex flex-row mb-3">
+    <a href="/control/users" class="p-3">
       <div class="card control-card">
         <div class="card-body">
-          <h5 class="card-title">Users</h5>
-          <h6 class="card-subtitle">View, promote, demote, and delete users</h6>
+          <h5 class="card-title">Create, read, update, and delete</h5>
         </div>
       </div>
     </a>
-    <a href="#" class="p-3">
-      <div class="card card-control">
+    <div class="card control-card">
+      <div class="card-body">
+        <h5 class="card-title">Total users registered</h5>
+        <h6 id="users-count"></h6>
+      </div>
+    </div>
+  </div>
+  <div>
+    <h3>Server</h3>
+    <h4>The backend Spring Boot-powered server</h4>
+  </div>
+  <div class="d-flex flex-row mb-3">
+    <a href="/control/server" class="p-3">
+      <div class="card control-card">
         <div class="card-body">
-          <h5 class="card-title">Server</h5>
-          <h6 class="card-subtitle">Modify backend server settings</h6>
+          <h5 class="card-title">Change settings</h5>
         </div>
       </div>
     </a>
+    <div class="card control-card">
+      <div class="card-body">
+        <h5 class="card-title">Server uptime</h5>
+        <h6 id="server-uptime"></h6>
+      </div>
+    </div>
   </div>
   <script src="/js/control.js"></script>
 </main>

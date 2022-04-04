@@ -64,8 +64,6 @@ $(document).ready(function() {
       headers: getCSRFHeader(),
       success: function(data) {
         let files = data.data.items;
-        console.log(files);
-        console.log(data);
         if (files.length === 0) {
           showElement(noResultsAlert);
         } else {
