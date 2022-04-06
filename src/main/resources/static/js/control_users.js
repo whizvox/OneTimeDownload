@@ -1,5 +1,6 @@
 $(document).ready(function() {
 
+  let selfUserId = $('#self-user-id');
   let errorAlert = $('#alert-error');
   let form = $('#form-users');
   let searchButton = form.find(':submit');
@@ -22,6 +23,7 @@ $(document).ready(function() {
 
   let deleteModal = $('#modal-delete');
   let deleteAlert = $('#alert-delete');
+  let deleteSelfAlert = $('#alert-delete-self');
   let deleteUsersList = deleteModal.find('ul');
   let deleteApplyButton = $('#btn-delete-apply');
 
@@ -44,6 +46,8 @@ $(document).ready(function() {
 
   form.submit(function(event) {
     event.preventDefault();
+    selectedUsers = [];
+    fetchedUsers.clear();
     hideElement(resultsArea);
     hideElement(noResultsAlert);
     hideElement(errorAlert);
@@ -163,10 +167,14 @@ $(document).ready(function() {
 
   deleteButton.click(function() {
     hideElement(deleteAlert);
+    hideElement(deleteSelfAlert);
     if (selectedUsers.length > 0) {
       deleteUsersList.children().remove();
-      selectedUsers.forEach(fileId => {
-        deleteUsersList.append($('<li>').text(fileId));
+      selectedUsers.forEach(userId => {
+        if (userId === selfUserId.val()) {
+          showElement(deleteSelfAlert);
+        }
+        deleteUsersList.append($('<li>').text(`${userId} (${fetchedUsers.get(Number(userId)).email})`));
       });
     }
   });
@@ -179,7 +187,7 @@ $(document).ready(function() {
       let formData = new FormData();
       formData.append('ids', selectedUsers);
       $.ajax({
-        url: 'users/delete',
+        url: '/users/delete',
         type: 'post',
         data: formData,
         headers: getCSRFHeader(),
@@ -196,6 +204,7 @@ $(document).ready(function() {
         complete: function() {
           deleteApplyButton.text('Delete');
           enableElement(deleteApplyButton);
+          searchButton.click();
         }
       });
     }

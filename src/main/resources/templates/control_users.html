@@ -9,7 +9,7 @@
 <main class="container">
   <input type="hidden" id="self-user-id" th:value="${user.id}">
 
-  <h1>Users control panel</h1>
+  <h1>View users</h1>
   <p id="alert-error" class="alert alert-danger mb-3" hidden></p>
 
   <form id="form-users" class="mb-3">
@@ -79,7 +79,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="close"></button>
         </div>
         <div class="modal-body">
-          <p id="alert-edit" class="alert alert-danger alert-dismissible" hidden></p>
+          <p id="alert-edit" class="alert alert-danger" hidden></p>
           <form id="form-edit">
             <div class="mb-3 form-floating">
               <input type="text" id="edit-email" name="email" class="form-control">
@@ -126,7 +126,10 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="close"></button>
         </div>
         <div class="modal-body">
-          <p id="alert-delete" class="alert alert-dismissible" hidden></p>
+          <p id="alert-delete" class="alert" hidden></p>
+          <p id="alert-delete-self" class="alert alert-danger" hidden>
+            <span>One of the listed users is yourself! If this is a mistake, turn back now!</span>
+          </p>
           <p class="mb-3">Are you sure you want to delete the following users:</p>
           <ul class="font-monospace"></ul>
         </div>

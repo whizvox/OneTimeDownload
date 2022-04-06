@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<!--/*@thymesVar id="page" type="me.whizvox.otdl.page.Page"*/-->
+<html th:lang="${page.lang}" lang="en" th:fragment="page(content)">
+<head th:replace="/fragments/common :: head"></head>
+<body>
+<header th:replace="/fragments/common :: header"></header>
+<main class="container" th:replace="${content}">
+</main>
+<footer th:replace="/fragments/common :: footer"></footer>
+</body>
+</html>

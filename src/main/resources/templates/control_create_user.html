@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html th:insert="fragments/standard_page :: page(~{ :: .main-content})">
+<main class="container main-content">
+  <h1>Create new user</h1>
+  <p id="alert" class="alert alert-dismissible" hidden>
+    <span></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </p>
+  <form id="form-create-user">
+    <div class="form-floating mb-3">
+      <input type="text" id="email" name="email" class="form-control">
+      <label for="email">Email address</label>
+      <div class="invalid-feedback" id="email-invalid" hidden>Field required (doesn't actually have to be a proper email address)</div>
+    </div>
+    <div class="form-floating mb-3">
+      <input type="password" id="password" name="password" class="form-control">
+      <label for="password">Password</label>
+      <div class="invalid-feedback" id="password-invalid" hidden>Field required</div>
+    </div>
+    <div class="form-floating mb-3">
+      <select id="rank" name="rank" class="form-select">
+        <option value="MEMBER" selected>Member</option>
+        <option value="CONTRIBUTOR">Contributor</option>
+      </select>
+      <label for="rank">Rank</label>
+    </div>
+    <div class="form-floating mb-3">
+      <select id="group" name="group" class="form-select">
+        <option value="RESTRICTED">Restricted</option>
+        <option value="USER" selected>User</option>
+        <option value="ADMIN">Admin</option>
+      </select>
+      <label for="group">Group</label>
+    </div>
+    <div class="form-check mb-3">
+      <input type="checkbox" id="verified" name="enabled" class="form-check-input">
+      <label for="verified" class="form-check-label">Verified</label>
+    </div>
+    <button type="submit" class="btn btn-info">Create new user</button>
+  </form>
+  <script src="/js/control_create_user.js"></script>
+</main>
+</html>

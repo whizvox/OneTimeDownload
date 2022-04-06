@@ -4,83 +4,139 @@
   <meta charset="UTF-8">
   <title>Control panel</title>
 </head>
-<body class="container">
+<body>
 <header th:replace="fragments/common :: header"></header>
 <main class="container">
+  <p id="alert" class="alert alert-danger" hidden>
+    <span></span>
+  </p>
   <h1>Control panel</h1>
-  <p class="alert alert-danger">These settings can drastically and irrevocably change the site. Use them at your own
-    risk!</p>
   <div>
     <h3>Files</h3>
-    <h4>Includes both file records stored in the database and actual files stored in the configured file system or
-    storage service.</h4>
+    <p>Includes both file records stored in the database and actual files stored in the configured file system or
+    storage service.</p>
   </div>
   <div class="d-flex flex-row mb-3">
-    <!--/*<a href="/control/files/overview" class="p-3">
-      <div class="card control-card">
-        <div class="card-body">
-          <h5 class="card-title">Overview</h5>
-        </div>
-      </div>
-    </a>*/-->
-    <a href="/control/files" class="p-3">
-      <div class="card control-card">
-        <div class="card-body">
+    <div class="card control-card p-1">
+      <div class="card-body">
+        <a href="/control/files">
           <h5 class="card-title">Read, update, and delete</h5>
-        </div>
+        </a>
       </div>
-    </a>
-    <div class="card control-card">
+    </div>
+    <div class="card control-card p-1">
       <div class="card-body">
         <h5 class="card-title">Number of files</h5>
         <h6 id="files-count"></h6>
       </div>
     </div>
-    <div class="card control-card">
+    <div class="card control-card p-1">
       <div class="card-body">
         <h5 class="card-title">Storage used</h5>
-        <h6 id="files-storage-amount"></h6>
+        <h6 id="files-storage"></h6>
       </div>
     </div>
   </div>
   <div>
     <h3>Users</h3>
-    <h4>Account details of users who have registered on the site</h4>
+    <p>Account details of users who have registered on the site</p>
   </div>
   <div class="d-flex flex-row mb-3">
-    <a href="/control/users" class="p-3">
-      <div class="card control-card">
-        <div class="card-body">
-          <h5 class="card-title">Create, read, update, and delete</h5>
-        </div>
+    <div class="card control-card p-1">
+      <div class="card-body">
+        <a href="/control/users/create">
+          <h5 class="card-title">Create new user</h5>
+        </a>
       </div>
-    </a>
-    <div class="card control-card">
+    </div>
+    <div class="card control-card p-1">
+      <div class="card-body">
+        <a href="/control/users">
+          <h5 class="card-title">Read, update, and delete</h5>
+        </a>
+      </div>
+    </div>
+    <div class="card control-card p-1">
       <div class="card-body">
         <h5 class="card-title">Total users registered</h5>
         <h6 id="users-count"></h6>
       </div>
     </div>
+    <div class="card control-card p-1">
+      <div class="card-body">
+        <h5 class="card-title">Unverified users</h5>
+        <h6 id="users-unverified"></h6>
+      </div>
+    </div>
   </div>
   <div>
     <h3>Server</h3>
-    <h4>The backend Spring Boot-powered server</h4>
+    <p>The backend Spring Boot-powered server</p>
   </div>
   <div class="d-flex flex-row mb-3">
-    <a href="/control/server" class="p-3">
-      <div class="card control-card">
-        <div class="card-body">
-          <h5 class="card-title">Change settings</h5>
-        </div>
-      </div>
-    </a>
-    <div class="card control-card">
+    <div class="card control-card p-1">
       <div class="card-body">
         <h5 class="card-title">Server uptime</h5>
         <h6 id="server-uptime"></h6>
       </div>
     </div>
+    <div class="card control-card p-1">
+      <div class="card-body">
+        <a href="#" id="link-restart-server" data-bs-toggle="modal" data-bs-target="#modal-restart">
+          <h5 class="card-title">Restart server</h5>
+        </a>
+      </div>
+    </div>
+    <div class="card control-card p-1">
+      <div class="card-body">
+        <a href="#" id="link-shutdown-server" data-bs-toggle="modal" data-bs-target="#modal-shutdown">
+          <h5 class="card-title">Shutdown server</h5>
+        </a>
+      </div>
+    </div>
   </div>
+  <div id="modal-restart" class="modal fade" aria-describedby="modal-restart-title" data-bs-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-restart-title">Restart server?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p id="alert-restart" class="alert" hidden>
+            <span></span>
+          </p>
+          Are you sure you wish to restart the server?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" id="btn-restart" class="btn btn-danger">Restart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="modal-shutdown" class="modal fade" aria-describedby="modal-shutdown-title" data-bs-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-shutdown-title">Shutdown server?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p id="alert-shutdown" class="alert" hidden>
+            <span></span>
+          </p>
+          Are you sure you wish to shut down the server? This cannot be undone, and the server will need to be
+          restarted manually.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" id="btn-shutdown" class="btn btn-danger">SHUTDOWN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button type="button" id="btn-recalculate" class="btn btn-info float-end">Recalculate stats</button>
   <script src="/js/control.js"></script>
 </main>
 <footer th:replace="fragments/common :: footer"></footer>

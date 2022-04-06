@@ -40,6 +40,11 @@ public class UserController {
     return users.getUserDetails(id).map(ApiResponse::ok).orElseGet(() -> ApiResponse.notFound("" + id));
   }
 
+  @GetMapping("available")
+  public ResponseEntity<Object> checkIfAvailable(@RequestParam String email) {
+    return ApiResponse.ok(users.isEmailAvailable(email));
+  }
+
   @PostMapping("register")
   public ResponseEntity<Object> register(@RequestParam(required = false) String email, @RequestParam(required = false) String password) {
     if (email == null) {
@@ -54,6 +59,20 @@ public class UserController {
       return ApiResponse.badRequest("Invalid password, " + config.getPasswordRequirementDescription());
     } catch (EmailTakenException e) {
       return ApiResponse.badRequest("Email taken");
+    }
+  }
+
+  @PreAuthorize("@authorizationService.hasPermission(principal, 'ADMIN')")
+  @PostMapping
+  public ResponseEntity<Object> create(@RequestParam String email,
+                                       @RequestParam String password,
+                                       @RequestParam UserRank rank,
+                                       @RequestParam UserGroup group,
+                                       @RequestParam boolean enabled) {
+    try {
+      return ApiResponse.ok(new PublicUserDetails(users.createUser(email, password, rank, group, enabled)));
+    } catch (EmailTakenException e) {
+      return ApiResponse.badRequest("Email already taken");
     }
   }
 
@@ -101,7 +120,7 @@ public class UserController {
   }
 
   @PreAuthorize("@authorizationService.hasPermission(principal, 'ADMIN')")
-  @PostMapping
+  @PostMapping("delete")
   public ResponseEntity<Object> delete(@RequestParam(required = false) Long[] ids) {
     if (ids != null && ids.length > 0) {
       users.delete(List.of(ids));

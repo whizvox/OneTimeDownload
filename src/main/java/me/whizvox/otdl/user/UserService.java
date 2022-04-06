@@ -69,11 +69,15 @@ public class UserService implements UserDetailsService {
         .orElseThrow(() -> new UsernameNotFoundException(MessageFormat.format("Email {0} does not exist", username)));
   }
 
+  public boolean isEmailAvailable(String email) {
+    return repo.findByEmail(email).isEmpty();
+  }
+
   public User registerNewUser(String email, CharSequence password) {
     if (!passwordCheck.matcher(password).matches()) {
       throw new InvalidPasswordException();
     }
-    if (repo.findByEmail(email).isPresent()) {
+    if (!isEmailAvailable(email)) {
       throw new EmailTakenException();
     }
     User user = User.builder().email(email).password(encoder.encode(password)).rank(UserRank.MEMBER).build();
@@ -94,6 +98,20 @@ public class UserService implements UserDetailsService {
     emailSender.send(msg);
     log.info("New user {} registered, email sent to {} for verification", user.getId(), StringUtils.getObscuredEmail(user.getEmail()));
     return user;
+  }
+
+  public User createUser(String email, CharSequence password, UserRank rank, UserGroup group, boolean enabled) {
+    if (!isEmailAvailable(email)) {
+      throw new EmailTakenException();
+    }
+    User user = User.builder()
+        .email(email)
+        .password(encoder.encode(password))
+        .rank(rank)
+        .group(group)
+        .enabled(enabled)
+        .build();
+    return repo.save(user);
   }
 
   public void confirmUser(String token) {
@@ -130,6 +148,14 @@ public class UserService implements UserDetailsService {
   public void delete(Iterable<Long> ids) {
     repo.deleteAllById(ids);
     log.info("Deleted user(s): {}", StringUtils.limitedJoin(StreamSupport.stream(ids.spliterator(), false).map(id -> Long.toString(id)), 10, ", "));
+  }
+
+  public long getCount() {
+    return repo.count();
+  }
+
+  public long getUnverifiedCount() {
+    return repo.countAllUnverified();
   }
 
 }

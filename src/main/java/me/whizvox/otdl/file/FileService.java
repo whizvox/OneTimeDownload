@@ -217,4 +217,16 @@ public class FileService {
     repo.save(file);
   }
 
+  public long getCount() {
+    return repo.count();
+  }
+
+  public long getStorageUsed() {
+    if (getCount() == 0) {
+      return 0;
+    }
+    // probably a good idea to cache this value?
+    return repo.getStorageUsed();
+  }
+
 }
