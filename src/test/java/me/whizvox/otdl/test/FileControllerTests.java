@@ -124,7 +124,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isUnauthorized(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":401,\"error\":true,\"data\":{\"message\":\"Unauthorized\"}}")
+            content().json("{\"status\":401,\"error\":true,\"data\":\"Unauthorized\"}")
         );
   }
 
@@ -135,7 +135,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isUnauthorized(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":401,\"error\":true,\"data\":{\"message\":\"Unauthorized\"}}")
+            content().json("{\"status\":401,\"error\":true,\"data\":\"Unauthorized\"}")
         );
   }
 
@@ -212,7 +212,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isUnauthorized(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":401,\"error\":true,\"data\":{\"message\":\"Unauthorized\"}}")
+            content().json("{\"status\":401,\"error\":true,\"data\":\"Unauthorized\"}")
         );
   }
 
@@ -223,7 +223,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isUnauthorized(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":401,\"error\":true,\"data\":{\"message\":\"Unauthorized\"}}")
+            content().json("{\"status\":401,\"error\":true,\"data\":\"Unauthorized\"}")
         );
   }
 
@@ -294,7 +294,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isBadRequest(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Bad lifespan: 0 minutes\"}}")
+            content().json("{\"status\":400,\"error\":true,\"data\":\"Bad lifespan (0): min 1, max 30 minutes\"}")
         );
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
                 .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
@@ -304,7 +304,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isBadRequest(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Bad lifespan: -1 minutes\"}}")
+            content().json("{\"status\":400,\"error\":true,\"data\":\"Bad lifespan (-1): min 1, max 30 minutes\"}")
         );
   }
 
@@ -316,7 +316,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isBadRequest(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Missing file\"}}")
+            content().json("{\"status\":400,\"error\":true,\"data\":\"Missing file\"}")
         );
   }
 
@@ -328,7 +328,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isBadRequest(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Missing password parameter\"}}")
+            content().json("{\"status\":400,\"error\":true,\"data\":\"Missing password\"}")
         );
   }
 
@@ -341,7 +341,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isBadRequest(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":400,\"error\":true,\"data\":{\"message\":\"Invalid password base64 string\"}}")
+            content().json("{\"status\":400,\"error\":true,\"data\":\"Invalid password base64 string\"}")
         );
   }
 
@@ -380,7 +380,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isUnauthorized(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":401,\"error\":true,\"data\":{\"message\":\"Unauthorized\"}}")
+            content().json("{\"status\":401,\"error\":true,\"data\":\"Unauthorized\"}")
         );
   }
 
@@ -391,7 +391,7 @@ class FileControllerTests {
         .andExpectAll(
             status().isUnauthorized(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":401,\"error\":true,\"data\":{\"message\":\"Unauthorized\"}}")
+            content().json("{\"status\":401,\"error\":true,\"data\":\"Unauthorized\"}")
         );
   }
 

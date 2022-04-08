@@ -133,7 +133,7 @@ public class FileServiceTests {
   @Test
   void upload_givenGoodInput_thenSuccess() {
     assertDoesNotThrow(() -> {
-      FileInfo info = files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 60, "password123".toCharArray());
+      FileInfo info = files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 60, "password123".toCharArray(), null);
       assertEquals("f3cf3af6d97fa0040dafc8963d8f2c47", info.getMd5());
       assertEquals("ebc29fb09abaddf38513475fae93dc10e1be8afa", info.getSha1());
       assertEquals(17, info.getOriginalSize());
@@ -145,32 +145,32 @@ public class FileServiceTests {
 
   @Test
   void upload_givenZeroLengthPassword_thenSuccess() {
-    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 60, new char[0]));
+    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 60, new char[0], null));
   }
 
   @Test
   void upload_givenZeroLengthFile_thenSuccess() {
-    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", new byte[0]), 60, "password123".toCharArray()));
+    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", new byte[0]), 60, "password123".toCharArray(), null));
   }
 
   @Test
   void upload_givenNoFile_thenThrow() {
-    assertThrows(NoFileException.class, () -> files.upload(null, 60, "password123".toCharArray()));
+    assertThrows(NoFileException.class, () -> files.upload(null, 60, "password123".toCharArray(), null));
   }
 
   @Test
   void upload_givenMinLifespan_thenSuccess() {
-    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 1, "password123".toCharArray()));
+    assertDoesNotThrow(() -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 1, "password123".toCharArray(), null));
   }
 
   @Test
   void upload_givenZeroLifespan_thenThrow() {
-    assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 0, "password123".toCharArray()));
+    assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), 0, "password123".toCharArray(), null));
   }
 
   @Test
   void upload_givenNegativeLifespan_thenThrow() {
-    assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), -1, "password123".toCharArray()));
+    assertThrows(InvalidLifespanException.class, () -> files.upload(new MockMultipartFile("test.txt", "some content here".getBytes(StandardCharsets.UTF_8)), -1, "password123".toCharArray(), null));
   }
 
   @Test

@@ -7,8 +7,10 @@ import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.SecurityService;
 import me.whizvox.otdl.storage.StorageException;
 import me.whizvox.otdl.user.User;
+import me.whizvox.otdl.user.UserGroup;
 import me.whizvox.otdl.util.ApiResponse;
 import me.whizvox.otdl.util.PagedResponseData;
+import me.whizvox.otdl.util.RequestUtils;
 import net.kaczmarzyk.spring.data.jpa.domain.Equal;
 import net.kaczmarzyk.spring.data.jpa.domain.GreaterThanOrEqual;
 import net.kaczmarzyk.spring.data.jpa.domain.LessThanOrEqual;
@@ -28,6 +30,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,7 +39,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -161,55 +167,28 @@ public class FileController {
                                        @RequestParam(required = false) String password,
                                        @RequestParam(defaultValue = "30") int lifespan,
                                        @AuthenticationPrincipal User user) {
-    if (password == null) {
-      return ApiResponse.badRequest("Missing password parameter");
-    }
-    int maxLifespanAllowed = 0;
-    long maxSizeAllowed = 0;
-    if (user == null) {
-      maxLifespanAllowed = config.getMaxLifespanAnonymous();
-      maxSizeAllowed = config.getMaxFileSizeAnonymous();
-    } else {
-      switch (user.getGroup()) {
-        case USER -> {
-          switch (user.getRank()) {
-            case ANONYMOUS -> {
-              maxLifespanAllowed = config.getMaxLifespanAnonymous();
-              maxSizeAllowed = config.getMaxFileSizeAnonymous();
-            }
-            case MEMBER -> {
-              maxLifespanAllowed = config.getMaxLifespanMember();
-              maxSizeAllowed = config.getMaxFileSizeMember();
-            }
-            case CONTRIBUTOR -> {
-              maxLifespanAllowed = config.getMaxLifespanContributor();
-              maxSizeAllowed = config.getMaxFileSizeContributor();
-            }
-          }
-        }
-        case ADMIN -> {
-          maxLifespanAllowed = Integer.MAX_VALUE;
-          maxSizeAllowed = Long.MAX_VALUE;
-        }
-      }
-    }
-    if (maxSizeAllowed == 0) {
-      return ApiResponse.forbidden("User is restricted, cannot upload files");
+    if (user != null && user.getGroup() == UserGroup.RESTRICTED) {
+      return ApiResponse.forbidden("Account is restricted");
     }
     if (file == null) {
       return ApiResponse.badRequest("Missing file");
     }
-    if (lifespan > maxLifespanAllowed) {
-      return ApiResponse.badRequest("Lifespan too large, max " + maxLifespanAllowed + " min");
+    if (password == null) {
+      return ApiResponse.badRequest("Missing password");
     }
-    if (file.getSize() > maxSizeAllowed) {
-      return ApiResponse.badRequest("File size too large, max " + maxSizeAllowed + " B");
+    int maxLifespan = config.getMaxLifespan(user);
+    long maxFileSize = config.getMaxFileSize(user);
+    if (lifespan > maxLifespan || lifespan < 1) {
+      return ApiResponse.badRequest("Bad lifespan (%d): min 1, max %d minutes".formatted(lifespan, maxLifespan));
+    }
+    if (file.getSize() > maxFileSize) {
+      return ApiResponse.badRequest("Bad file size (%d): max %d bytes".formatted(file.getSize(), maxFileSize));
     }
 
     char[] pwdArr = decodePassword(password);
     if (pwdArr != null) {
       try {
-        return ApiResponse.ok(new PublicFileInfo(files.upload(file, lifespan, pwdArr)));
+        return ApiResponse.ok(new PublicFileInfo(files.upload(file, lifespan, pwdArr, user)));
       } catch (InvalidLifespanException | NoFileException e) {
         return ApiResponse.badRequest(e.getMessage());
       } catch (Exception e) {
@@ -249,6 +228,7 @@ public class FileController {
   }
 
   @GetMapping("search")
+  @PreAuthorize("@authorizationService.hasPermission(principal, 'ADMIN')")
   public ResponseEntity<Object> search(
       @And({
           @Spec(params = "fileName", path = "fileName", spec = LikeIgnoreCase.class),
@@ -271,15 +251,39 @@ public class FileController {
       @RequestParam(required = false) String fileName,
       // TODO Figure out how to properly set date time format globally
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime expires,
-      @RequestParam(required = false) Boolean downloaded) {
-    return files.getInfo(id).map(file -> {
+      @RequestParam(required = false) Boolean downloaded,
+      @AuthenticationPrincipal User user) {
+    if (user == null) {
+      return ApiResponse.unauthorized();
+    }
+    if (user.getGroup() == UserGroup.RESTRICTED) {
+      return ApiResponse.forbidden("Account is restricted");
+    }
+    Optional<FileInfo> optional;
+    if (user.getGroup() == UserGroup.ADMIN) {
+      optional = files.getInfo(id);
+    } else {
+      optional = files.getFileUploadedByUser(id, user.getId());
+    }
+    return optional.map(file -> {
       if (fileName != null) {
+        if (fileName.isEmpty()) {
+          return ApiResponse.badRequest("Bad file name, cannot be empty");
+        }
         file.setFileName(fileName);
       }
       if (expires != null) {
+        Duration duration = Duration.between(file.getUploaded(), expires);
+        int maxLifespan = config.getMaxLifespan(user);
+        if (duration.toMinutes() > maxLifespan) {
+          return ApiResponse.badRequest("Lifespan too long (%d), %d minutes max".formatted(duration.toMinutes(), maxLifespan));
+        }
         file.setExpires(expires);
       }
       if (downloaded != null) {
+        if (user.getGroup() != UserGroup.ADMIN) {
+          return ApiResponse.forbidden("Do not have sufficient permissions to set downloaded flag");
+        }
         file.setDownloaded(downloaded);
       }
       try {
@@ -291,7 +295,22 @@ public class FileController {
     }).orElse(ApiResponse.notFound(id));
   }
 
+  @GetMapping("all")
+  public ResponseEntity<Object> getFilesUploadedBySelf(@AuthenticationPrincipal User user,
+                                                       Pageable pageable) {
+    if (user == null) {
+      return ApiResponse.unauthorized();
+    }
+    return ApiResponse.ok(new PagedResponseData<>(
+          files.getFilesUploadedByUser(
+              user.getId(),
+              RequestUtils.pageableWithDefaultSort(pageable, "uploaded")
+          ).map(PublicFileInfo::new))
+    );
+  }
+
   @PostMapping("/delete")
+  @PreAuthorize("@authorizationService.hasPermission(principal, 'ADMIN')")
   public ResponseEntity<Object> deleteBulk(@RequestParam String[] ids) {
     if (ids != null && ids.length > 0) {
       try {

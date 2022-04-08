@@ -56,11 +56,11 @@ public class ApiResponse {
   }
 
   public static ResponseEntity<Object> badRequest(@Nullable String msg) {
-    return createEntity(HttpStatus.BAD_REQUEST, true, new ErrorData(msg == null ? "Bad request" : msg));
+    return createEntity(HttpStatus.BAD_REQUEST, true, msg == null ? "Bad request" : msg);
   }
 
   public static ResponseEntity<Object> unauthorized() {
-    return createEntity(HttpStatus.UNAUTHORIZED, true, new ErrorData("Unauthorized"));
+    return createEntity(HttpStatus.UNAUTHORIZED, true, "Unauthorized");
   }
 
   public static ResponseEntity<Object> forbidden(@Nullable String msg) {

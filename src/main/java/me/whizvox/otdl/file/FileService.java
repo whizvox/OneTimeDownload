@@ -6,6 +6,7 @@ import me.whizvox.otdl.security.SecurityService;
 import me.whizvox.otdl.storage.InputFile;
 import me.whizvox.otdl.storage.StorageException;
 import me.whizvox.otdl.storage.StorageService;
+import me.whizvox.otdl.user.User;
 import me.whizvox.otdl.util.EncryptedResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -94,10 +96,11 @@ public class FileService {
    * @param file The file to be uploaded
    * @param lifespan How long the file will be kept in the file system in minutes
    * @param password The password used to encrypt the file
+   * @param user The user to be attributed as the file's owner
    * @return An {@link FileInfo} instance
    * @throws IOException Writing to the output file is unsuccessful in some way
    */
-  public FileInfo upload(MultipartFile file, int lifespan, char[] password) throws IOException {
+  public FileInfo upload(MultipartFile file, int lifespan, char[] password, @Nullable User user) throws IOException {
     if (file == null) {
       throw new NoFileException();
     }
@@ -137,6 +140,9 @@ public class FileService {
     info.setUploaded(LocalDateTime.now());
     info.setExpires(info.getUploaded().plusMinutes(lifespan));
     info.setDownloaded(false);
+    if (user != null) {
+      info.setUser(user);
+    }
     repo.save(info);
     return info;
   }
@@ -215,6 +221,14 @@ public class FileService {
       throw new UnknownIdException();
     }
     repo.save(file);
+  }
+
+  public Page<FileInfo> getFilesUploadedByUser(Long userId, Pageable pageable) {
+    return repo.findAllFilesUploadedBy(userId, pageable);
+  }
+
+  public Optional<FileInfo> getFileUploadedByUser(String fileId, Long userId) {
+    return repo.findFileUploadedBy(fileId, userId);
   }
 
   public long getCount() {
