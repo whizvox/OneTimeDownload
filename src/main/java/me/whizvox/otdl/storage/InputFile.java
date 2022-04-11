@@ -39,12 +39,27 @@ public interface InputFile {
     }
   }
 
+  record InputStreamFile(InputStream in, long size) implements InputFile {
+    @Override
+    public InputStream openStream() throws IOException {
+      return in;
+    }
+    @Override
+    public long getSize() {
+      return size;
+    }
+  }
+
   static InputFile multipart(MultipartFile file) {
     return new MultipartInputFile(file);
   }
 
   static InputFile local(Path path) {
     return new LocalInputFile(path);
+  }
+
+  static InputFile inputStream(InputStream in, long size) {
+    return new InputStreamFile(in, size);
   }
 
 }

@@ -40,9 +40,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -167,8 +165,12 @@ public class FileController {
                                        @RequestParam(required = false) String password,
                                        @RequestParam(defaultValue = "30") int lifespan,
                                        @AuthenticationPrincipal User user) {
-    if (user != null && user.getGroup() == UserGroup.RESTRICTED) {
-      return ApiResponse.forbidden("Account is restricted");
+    if (user != null) {
+      if (user.getGroup() == UserGroup.RESTRICTED) {
+        return ApiResponse.forbidden("Account is restricted");
+      } else if (!user.isEnabled()) {
+        return ApiResponse.forbidden("Account email is unverified");
+      }
     }
     if (file == null) {
       return ApiResponse.badRequest("Missing file");
@@ -254,7 +256,7 @@ public class FileController {
       @RequestParam(required = false) Boolean downloaded,
       @AuthenticationPrincipal User user) {
     if (user == null) {
-      return ApiResponse.unauthorized();
+      return ApiResponse.forbidden("Cannot modify file as anonymous user");
     }
     if (user.getGroup() == UserGroup.RESTRICTED) {
       return ApiResponse.forbidden("Account is restricted");
@@ -282,7 +284,7 @@ public class FileController {
       }
       if (downloaded != null) {
         if (user.getGroup() != UserGroup.ADMIN) {
-          return ApiResponse.forbidden("Do not have sufficient permissions to set downloaded flag");
+          return ApiResponse.badRequest("Do not have sufficient permissions to set downloaded flag");
         }
         file.setDownloaded(downloaded);
       }

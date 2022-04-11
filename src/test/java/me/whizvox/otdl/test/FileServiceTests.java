@@ -8,12 +8,15 @@ import me.whizvox.otdl.file.FileConfiguration;
 import me.whizvox.otdl.file.FileInfo;
 import me.whizvox.otdl.file.FileRepository;
 import me.whizvox.otdl.file.FileService;
+import me.whizvox.otdl.storage.StorageService;
+import me.whizvox.otdl.test.util.MockFile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -23,6 +26,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,13 +35,15 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 public class FileServiceTests {
 
+  private final StorageService storage;
   private final FileRepository repo;
   private final FileService files;
 
   private final Path rootDir;
 
   @Autowired
-  public FileServiceTests(FileConfiguration config, FileRepository repo, FileService files) throws Exception {
+  public FileServiceTests(FileConfiguration config, StorageService storage, FileRepository repo, FileService files) throws Exception {
+    this.storage = storage;
     this.repo = repo;
     this.files = files;
 
@@ -62,20 +69,15 @@ public class FileServiceTests {
   @BeforeEach
   void setUp() throws Exception {
     Files.createDirectories(rootDir);
-    FileInfo info = new FileInfo();
-    info.setId("R1DZ4vpu966g");
-    info.setOriginalSize(445);
-    info.setStoredSize(448);
-    info.setMd5("db89bb5ceab87f9c0fcc2ab36c189c2c");
-    info.setSha1("cd36b370758a259b34845084a6cc38473cb95e27");
-    info.setUploaded(LocalDateTime.of(2022, 2, 19, 12, 0, 0));
-    info.setExpires(info.getUploaded().plusMinutes(60));
-    info.setDownloaded(false);
-    info.setAuthToken("e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65");
-    repo.save(info);
-    try (InputStream in = FileServiceTests.class.getClassLoader().getResourceAsStream("test/R1DZ4vpu966g")) {
-      Files.copy(in, rootDir.resolve("R1DZ4vpu966g"));
-    }
+
+    repo.save(MockFile.asAnonymous());
+    MockFile.copyFromResources(storage, MockFile.ANONYMOUS);
+
+    repo.save(MockFile.asVerifiedMember());
+    MockFile.copyFromResources(storage, MockFile.VERIFIED_MEMBER);
+
+    repo.save(MockFile.asContributor());
+    MockFile.copyFromResources(storage, MockFile.CONTRIBUTOR);
   }
 
   @AfterEach
@@ -126,7 +128,7 @@ public class FileServiceTests {
     assertEquals("cd36b370758a259b34845084a6cc38473cb95e27", info.getSha1());
     assertEquals("e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65", info.getAuthToken());
     assertEquals(LocalDateTime.of(2022, 2, 19, 12, 0, 0), info.getUploaded());
-    assertEquals(LocalDateTime.of(2022, 2, 19, 13, 0, 0), info.getExpires());
+    assertEquals(LocalDateTime.of(2022, 2, 19, 12, 30, 0), info.getExpires());
     assertFalse(info.isDownloaded());
   }
 
@@ -210,20 +212,78 @@ public class FileServiceTests {
 
   @Test
   void deleteExpiredFiles_givenExpiredFile_thenDelete() {
-    FileInfo info = repo.findById("R1DZ4vpu966g").get();
-    info.setExpires(LocalDateTime.now().minusMinutes(1));
-    repo.save(info);
-    assertThat(files.deleteExpiredFiles()).isEqualTo(1);
-    assertThat(repo.findById("R1DZ4vpu966g")).isEmpty();
+    FileInfo info1 = repo.findById(MockFile.ANONYMOUS).get();
+    info1.setExpires(LocalDateTime.now().minusMinutes(1));
+    repo.save(info1);
+
+    FileInfo info2 = repo.findById(MockFile.VERIFIED_MEMBER).get();
+    info2.setExpires(LocalDateTime.now().minusMinutes(1));
+    repo.save(info2);
+
+    FileInfo info3 = repo.findById(MockFile.CONTRIBUTOR).get();
+    info3.setExpires(LocalDateTime.now().minusMinutes(1));
+    repo.save(info3);
+
+    assertThat(files.deleteExpiredFiles()).isEqualTo(3);
+    assertThat(repo.findById(MockFile.ANONYMOUS)).isEmpty();
+    assertThat(repo.findById(MockFile.VERIFIED_MEMBER)).isEmpty();
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isEmpty();
   }
 
   @Test
   void deleteExpiredFiles_givenNoExpiredFiles_thenNoOp() {
-    FileInfo info = repo.findById("R1DZ4vpu966g").get();
-    info.setExpires(LocalDateTime.now().plusMinutes(1));
-    repo.save(info);
+    FileInfo info1 = repo.findById(MockFile.ANONYMOUS).get();
+    info1.setExpires(LocalDateTime.now().plusMinutes(1));
+    repo.save(info1);
+
+    FileInfo info2 = repo.findById(MockFile.VERIFIED_MEMBER).get();
+    info2.setExpires(LocalDateTime.now().plusMinutes(1));
+    repo.save(info2);
+
+    FileInfo info3 = repo.findById(MockFile.CONTRIBUTOR).get();
+    info3.setExpires(LocalDateTime.now().plusMinutes(1));
+    repo.save(info3);
+
     assertThat(files.deleteExpiredFiles()).isEqualTo(0);
-    assertThat(repo.findById("R1DZ4vpu966g")).isPresent();
+    assertThat(repo.findById(MockFile.ANONYMOUS)).isPresent();
+    assertThat(repo.findById(MockFile.VERIFIED_MEMBER)).isPresent();
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isPresent();
+  }
+
+  @Test
+  void bulkDelete_givenNoIds_thenSuccess() {
+    files.delete(Collections.emptyList());
+
+    assertThat(repo.findById(MockFile.ANONYMOUS)).isPresent();
+    assertThat(repo.findById(MockFile.VERIFIED_MEMBER)).isPresent();
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isPresent();
+  }
+
+  @Test
+  void bulkDelete_givenAllValidIds_thenSuccess() {
+    files.delete(Arrays.asList(MockFile.ANONYMOUS, MockFile.VERIFIED_MEMBER, MockFile.CONTRIBUTOR));
+
+    assertThat(repo.findById(MockFile.ANONYMOUS)).isEmpty();
+    assertThat(repo.findById(MockFile.VERIFIED_MEMBER)).isEmpty();
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isEmpty();
+  }
+
+  @Test
+  void bulkDelete_givenAllInvalidIds_thenSuccess() {
+    files.delete(Arrays.asList("badid1", "badid2", "badid3"));
+
+    assertThat(repo.findById(MockFile.ANONYMOUS)).isPresent();
+    assertThat(repo.findById(MockFile.VERIFIED_MEMBER)).isPresent();
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isPresent();
+  }
+
+  @Test
+  void bulkDelete_givenValidAndInvalidIds_thenSuccess() {
+    files.delete(Arrays.asList("badid1", MockFile.ANONYMOUS, MockFile.CONTRIBUTOR, "badid4"));
+
+    assertThat(repo.findById(MockFile.ANONYMOUS)).isEmpty();
+    assertThat(repo.findById(MockFile.VERIFIED_MEMBER)).isPresent();
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isEmpty();
   }
 
 }

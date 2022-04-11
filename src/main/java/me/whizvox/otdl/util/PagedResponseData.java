@@ -14,9 +14,10 @@ import java.util.List;
 public class PagedResponseData<T> {
 
   public PagedResponseData(Page<T> page) {
-    this(page.getNumberOfElements(), page.getTotalElements(), page.getTotalPages(), page.getContent());
+    this(page.getNumber(), page.getNumberOfElements(), page.getTotalElements(), page.getTotalPages(), page.getContent());
   }
 
+  private int index;
   private int count;
   private long total;
   private int pages;

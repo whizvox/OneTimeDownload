@@ -8,7 +8,7 @@ import java.util.Objects;
 public class AuthorizationService {
 
   public boolean hasPermission(User user, String group) {
-    return user != null && user.getGroup().ordinal() >= UserGroup.valueOf(group).ordinal();
+    return user != null && user.isEnabled() && user.getGroup().ordinal() >= UserGroup.valueOf(group).ordinal();
   }
 
   public boolean canAccessUserDetails(User user, Long id) {

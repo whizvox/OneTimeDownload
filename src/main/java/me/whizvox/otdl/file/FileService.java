@@ -192,7 +192,7 @@ public class FileService {
   }
 
   public void delete(Iterable<String> ids){
-    repo.deleteAllById(ids);
+    ids.forEach(this::delete);
     storage.delete(ids);
   }
 
