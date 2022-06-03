@@ -22,21 +22,14 @@
       <label for="email">Email address query</label>
     </div>
     <div class="mb-3 form-floating">
-      <select id="group" name="group" class="form-select">
+      <select id="role" name="role" class="form-select">
         <option value="" selected>Any</option>
-        <option value="USER">User</option>
+        <option value="MEMBER">Member</option>
+        <option value="CONTRIBUTOR">Contributor</option>
         <option value="ADMIN">Admin</option>
         <option value="RESTRICTED">Restricted (currently unused)</option>
       </select>
-      <label for="group">Group</label>
-    </div>
-    <div class="mb-3 form-floating">
-      <select id="rank" name="rank" class="form-select">
-        <option value="" selected>Any</option>
-        <option value="MEMBER">Member</option>
-        <option value="CONTRIBUTOR">Contributor (currently unused)</option>
-      </select>
-      <label for="rank">Rank</label>
+      <label for="role">Role</label>
     </div>
     <div class="mb-3 form-floating">
       <select id="enabled" name="enabled" class="form-select">
@@ -62,8 +55,7 @@
         <th><input type="checkbox" id="select-all"></th>
         <th>ID</th>
         <th>Email address</th>
-        <th>Rank</th>
-        <th>Group</th>
+        <th>Role</th>
         <th>Verified</th>
       </tr>
       </thead>
@@ -86,19 +78,13 @@
               <label for="edit-email">Email address</label>
             </div>
             <div class="mb-3 form-floating">
-              <select id="edit-rank" name="rank" class="form-select">
+              <select id="edit-role" name="role" class="form-select">
+                <option value="RESTRICTED">Restricted</option>
                 <option value="MEMBER">Member</option>
                 <option value="CONTRIBUTOR">Contributor</option>
-              </select>
-              <label for="edit-rank">Rank</label>
-            </div>
-            <div class="mb-3 form-floating">
-              <select id="edit-group" name="group" class="form-select">
-                <option value="RESTRICTED">Restricted</option>
-                <option value="USER">User</option>
                 <option value="ADMIN">Admin</option>
               </select>
-              <label for="edit-group">Group</label>
+              <label for="edit-role">Role</label>
             </div>
             <div class="mb-3">
               <input type="checkbox" id="edit-verified" name="enabled" class="form-check-input">

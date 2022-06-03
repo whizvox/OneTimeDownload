@@ -20,6 +20,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("users")
@@ -36,7 +37,7 @@ public class UserController {
 
   @PreAuthorize("@authorizationService.canAccessUserDetails(principal, #id)")
   @GetMapping("{id}")
-  public ResponseEntity<Object> getUserDetails(@PathVariable Long id) {
+  public ResponseEntity<Object> getUserDetails(@PathVariable UUID id) {
     return users.getUserDetails(id).map(ApiResponse::ok).orElseGet(() -> ApiResponse.notFound("" + id));
   }
 
@@ -66,11 +67,10 @@ public class UserController {
   @PostMapping
   public ResponseEntity<Object> create(@RequestParam String email,
                                        @RequestParam String password,
-                                       @RequestParam UserRank rank,
-                                       @RequestParam UserGroup group,
+                                       @RequestParam UserRole role,
                                        @RequestParam boolean enabled) {
     try {
-      return ApiResponse.ok(new PublicUserDetails(users.createUser(email, password, rank, group, enabled)));
+      return ApiResponse.ok(new PublicUserDetails(users.createUser(email, password, role, enabled)));
     } catch (EmailTakenException e) {
       return ApiResponse.badRequest("Email already taken");
     }
@@ -92,7 +92,7 @@ public class UserController {
   @PutMapping("{id}")
   @PreAuthorize("@authorizationService.canAccessUserDetails(principal, #id)")
   public ResponseEntity<Object> update(
-      @PathVariable Long id,
+      @PathVariable UUID id,
       @RequestParam MultiValueMap<String, String> params) {
     UpdateUserParameters newParams = new UpdateUserParameters();
     newParams.setAll(params);
@@ -106,8 +106,7 @@ public class UserController {
       @And(value = {
           @Spec(params = "id", path = "id", spec = Equal.class),
           @Spec(params = "email", path = "email", spec = LikeIgnoreCase.class),
-          @Spec(params = "rank", path = "rank", spec = Equal.class),
-          @Spec(params = "group", path = "group", spec = Equal.class),
+          @Spec(params = "role", path = "role", spec = Equal.class),
           @Spec(params = "enabled", path = "enabled", spec = Equal.class)
       }) Specification<User> spec,
       Pageable pageable) {
@@ -121,7 +120,7 @@ public class UserController {
 
   @PreAuthorize("@authorizationService.hasPermission(principal, 'ADMIN')")
   @PostMapping("delete")
-  public ResponseEntity<Object> delete(@RequestParam(required = false) Long[] ids) {
+  public ResponseEntity<Object> delete(@RequestParam(required = false) UUID[] ids) {
     if (ids != null && ids.length > 0) {
       users.delete(List.of(ids));
     }

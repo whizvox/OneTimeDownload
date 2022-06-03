@@ -61,7 +61,7 @@ public class PageController {
 
   @GetMapping("/login")
   public ModelAndView login(@AuthenticationPrincipal User user) {
-    if (user == null || !user.isLoggedIn()) {
+    if (user == null || !user.isGuest()) {
       return new ModelAndView("login")
           .addObject("page", createStandardPage("Login", "/login"));
     }
@@ -70,7 +70,7 @@ public class PageController {
 
   @GetMapping("/register")
   public ModelAndView register(@AuthenticationPrincipal User user) {
-    if (user == null || !user.isLoggedIn()) {
+    if (user == null || !user.isGuest()) {
       return new ModelAndView("register")
           .addObject("page", createStandardPage("Register", "/register"));
     }
@@ -94,7 +94,7 @@ public class PageController {
 
   @GetMapping("/need-confirm")
   public ModelAndView needConfirm(@AuthenticationPrincipal User user) {
-    if (user != null && user.isLoggedIn()) {
+    if (user != null && user.isGuest()) {
       return new ModelAndView("redirect:/");
     }
     return new ModelAndView("need-confirm")

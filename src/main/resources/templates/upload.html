@@ -7,7 +7,7 @@
   <div id="upload-alert" class="mb-3 alert" hidden>
     Could not upload file: <span id="upload-alert-code" class="fw-bold"></span> <span id="upload-alert-message" class="fst-italic"></span>
   </div>
-  <h3 class="alert alert-warning alert-dismissible" th:if="${user != null && user.isLoggedIn() && !user.isEnabled()}">
+  <h3 class="alert alert-warning alert-dismissible" th:if="${user != null && !user.isGuest() && !user.isVerified()}">
     Your email has not yet been verified.
   </h3>
   <form id="upload-file">
@@ -28,12 +28,12 @@
       <input type="password" id="password-confirm" class="form-control">
       <div id="password-confirm-invalid" class="invalid-feedback" hidden>Both passwords need to match</div>
     </div>
-    <div class="mb-3" th:if="${user != null && user.isLoggedIn() && user.isEnabled() && user.getGroup().toString() != 'RESTRICTED'}">
+    <div class="mb-3" th:if="${user != null && !user.isGuest() && user.isVerified() && user.role.toString() != 'RESTRICTED'}">
       <label for="lifespan" class="form-label">Lifespan (minutes)</label>
-      <input type="range" id="lifespan" name="lifespan" min="1" max="720" value="30" class="form-range" th:if="${user.group.toString() == 'USER' && user.rank.toString() == 'MEMBER'}">
-      <input type="range" id="lifespan" name="lifespan" min="1" max="14400" value="30" class="form-range" th:if="${user.group.toString() == 'USER' && user.rank.toString() == 'CONTRIBUTOR'}">
-      <span id="lifespan-value" th:if="${user.group.toString() == 'USER'}"></span>
-      <input type="number" id="lifespan" name="lifespan" min="1" value="30" class="form-control" th:if="${user.group.toString() == 'ADMIN'}">
+      <input type="range" id="lifespan" name="lifespan" min="1" max="720" value="30" class="form-range" th:if="${user.role.toString() == 'MEMBER'}">
+      <input type="range" id="lifespan" name="lifespan" min="1" max="14400" value="30" class="form-range" th:if="${user.role.toString() == 'CONTRIBUTOR'}">
+      <span id="lifespan-value" th:if="${user.role.toString() == 'MEMBER'}"></span>
+      <input type="number" id="lifespan" name="lifespan" min="1" value="30" class="form-control" th:if="${user.role.toString() == 'ADMIN'}">
     </div>
     <div class="mb-3">
       <button type="submit" class="btn btn-info text-white">Upload</button>

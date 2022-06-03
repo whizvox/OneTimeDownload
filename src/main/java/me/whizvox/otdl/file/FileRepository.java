@@ -8,6 +8,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface FileRepository extends PagingAndSortingRepository<FileInfo, String>, JpaSpecificationExecutor<FileInfo> {
 
@@ -18,9 +19,9 @@ public interface FileRepository extends PagingAndSortingRepository<FileInfo, Str
   Long getStorageUsed();
 
   @Query("SELECT file FROM FileInfo file WHERE file.user IS NOT NULL AND file.user.id = :userId")
-  Page<FileInfo> findAllFilesUploadedBy(Long userId, Pageable pageable);
+  Page<FileInfo> findAllFilesUploadedBy(UUID userId, Pageable pageable);
 
   @Query("SELECT file FROM FileInfo file WHERE file.id = :fileId AND file.user IS NOT NULL AND file.user.id = :userId")
-  Optional<FileInfo> findFileUploadedBy(String fileId, Long userId);
+  Optional<FileInfo> findFileUploadedBy(String fileId, UUID userId);
 
 }

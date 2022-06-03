@@ -15,8 +15,7 @@ $(document).ready(function() {
   let editAlert = $('#alert-edit');
   let editForm = $('#form-edit');
   let editEmailField = editForm.find('input[name=email]');
-  let editRankField = editForm.find('select[name=rank]');
-  let editGroupField = editForm.find('select[name=group]');
+  let editRoleField = editForm.find('select[name=role]');
   let editVerifiedField = editForm.find('input[name=enabled]');
   let editPasswordField = editForm.find('input[name=password]');
   let editApplyButton = $('#btn-edit-apply');
@@ -85,8 +84,7 @@ $(document).ready(function() {
             row.append($('<td>').append(check));
             row.append($('<td>').text(user.id));
             row.append($('<td>').text(user.email));
-            row.append($('<td>').text(user.rank));
-            row.append($('<td>').text(user.group));
+            row.append($('<td>').text(user.role));
             row.append($('<td>').text(user.enabled ? 'Yes' : 'No'));
             tableBody.append(row);
           });
@@ -121,12 +119,9 @@ $(document).ready(function() {
   editButton.click(function() {
     hideElement(editAlert);
     if (selectedUsers.length > 0) {
-      // have to explicitly cast the ID to a number. selectedUsers stores strings, but the keys for fetchedUsers gets
-      // auto-type-casted to numbers.
-      const user = fetchedUsers.get(Number(selectedUsers[0]));
+      const user = fetchedUsers.get(selectedUsers[0]);
       editEmailField.val(user.email);
-      editRankField.val(user.rank);
-      editGroupField.val(user.group);
+      editRoleField.val(user.role);
       editVerifiedField.prop('checked', user.enabled);
     }
   });
@@ -174,7 +169,7 @@ $(document).ready(function() {
         if (userId === selfUserId.val()) {
           showElement(deleteSelfAlert);
         }
-        deleteUsersList.append($('<li>').text(`${userId} (${fetchedUsers.get(Number(userId)).email})`));
+        deleteUsersList.append($('<li>').text(`${userId} (${fetchedUsers.get(userId).email})`));
       });
     }
   });

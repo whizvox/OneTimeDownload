@@ -3,6 +3,7 @@ package me.whizvox.otdl.user;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -14,8 +15,8 @@ import java.util.UUID;
 public class ConfirmationToken {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Type(type = "uuid-char")
+  private UUID id;
 
   private String token;
 
@@ -27,10 +28,9 @@ public class ConfirmationToken {
 
   public ConfirmationToken(User user) {
     this.user = user;
+    id = UUID.randomUUID();
     created = LocalDateTime.now();
     token = UUID.randomUUID().toString();
   }
-
-  public static final ConfirmationToken EMPTY = new ConfirmationToken();
 
 }

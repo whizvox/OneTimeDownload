@@ -7,7 +7,7 @@ import me.whizvox.otdl.exception.WrongPasswordException;
 import me.whizvox.otdl.security.SecurityService;
 import me.whizvox.otdl.storage.StorageException;
 import me.whizvox.otdl.user.User;
-import me.whizvox.otdl.user.UserGroup;
+import me.whizvox.otdl.user.UserRole;
 import me.whizvox.otdl.util.ApiResponse;
 import me.whizvox.otdl.util.PagedResponseData;
 import me.whizvox.otdl.util.RequestUtils;
@@ -166,9 +166,9 @@ public class FileController {
                                        @RequestParam(defaultValue = "30") int lifespan,
                                        @AuthenticationPrincipal User user) {
     if (user != null) {
-      if (user.getGroup() == UserGroup.RESTRICTED) {
+      if (user.getRole() == UserRole.RESTRICTED) {
         return ApiResponse.forbidden("Account is restricted");
-      } else if (!user.isEnabled()) {
+      } else if (!user.isVerified()) {
         return ApiResponse.forbidden("Account email is unverified");
       }
     }
@@ -258,11 +258,11 @@ public class FileController {
     if (user == null) {
       return ApiResponse.forbidden("Cannot modify file as anonymous user");
     }
-    if (user.getGroup() == UserGroup.RESTRICTED) {
+    if (user.getRole() == UserRole.RESTRICTED) {
       return ApiResponse.forbidden("Account is restricted");
     }
     Optional<FileInfo> optional;
-    if (user.getGroup() == UserGroup.ADMIN) {
+    if (user.getRole() == UserRole.ADMIN) {
       optional = files.getInfo(id);
     } else {
       optional = files.getFileUploadedByUser(id, user.getId());
@@ -283,7 +283,7 @@ public class FileController {
         file.setExpires(expires);
       }
       if (downloaded != null) {
-        if (user.getGroup() != UserGroup.ADMIN) {
+        if (user.getRole() != UserRole.ADMIN) {
           return ApiResponse.badRequest("Do not have sufficient permissions to set downloaded flag");
         }
         file.setDownloaded(downloaded);

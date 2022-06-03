@@ -22,8 +22,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.StreamSupport;
@@ -58,8 +60,8 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  public Optional<PublicUserDetails> getUserDetails(Long id) {
-    return repo.findById(id).map(PublicUserDetails::new);
+  public Optional<User> getUserDetails(UUID id) {
+    return repo.findById(id);
   }
 
   @Override
@@ -80,9 +82,9 @@ public class UserService implements UserDetailsService {
     if (!isEmailAvailable(email)) {
       throw new EmailTakenException();
     }
-    User user = User.builder().email(email).password(encoder.encode(password)).rank(UserRank.MEMBER).build();
+    User user = new User(UUID.randomUUID(), email, encoder.encode(password), UserRole.MEMBER, LocalDateTime.now(), false);
     if (!shouldConfirmEmail) {
-      user.setEnabled(true);
+      user.setVerified(true);
       repo.save(user);
       log.info("New user {} registered and enabled", user.getId());
       return user;
@@ -100,17 +102,11 @@ public class UserService implements UserDetailsService {
     return user;
   }
 
-  public User createUser(String email, CharSequence password, UserRank rank, UserGroup group, boolean enabled) {
+  public User createUser(String email, CharSequence password, UserRole role, boolean enabled) {
     if (!isEmailAvailable(email)) {
       throw new EmailTakenException();
     }
-    User user = User.builder()
-        .email(email)
-        .password(encoder.encode(password))
-        .rank(rank)
-        .group(group)
-        .enabled(enabled)
-        .build();
+    User user = new User(UUID.randomUUID(), email, encoder.encode(password), role, LocalDateTime.now(), enabled);
     return repo.save(user);
   }
 
@@ -121,13 +117,13 @@ public class UserService implements UserDetailsService {
     }
     ConfirmationToken info = infoOp.get();
     User user = info.getUser();
-    user.setEnabled(true);
+    user.setVerified(true);
     repo.save(user);
     log.info("User {} has confirmed their email", user.getId());
     tokens.delete(info.getId());
   }
 
-  public void update(Long id, Parameters<User> params) {
+  public User update(UUID id, Parameters<User> params) {
     User user = repo.findById(id).orElseThrow(UnknownIdException::new);
     params.writeToEntity(user);
 
@@ -137,17 +133,18 @@ public class UserService implements UserDetailsService {
     if (params.containsValue(UpdateUserParameters.PASSWORD.getName())) {
       user.setPassword(encoder.encode(user.getPassword()));
     }
-    repo.save(user);
+    User updatedUser = repo.save(user);
     log.info("User {} updated", id);
+    return updatedUser;
   }
 
   public Page<User> search(Specification<User> spec, Pageable pageable) {
     return repo.findAll(spec, pageable);
   }
 
-  public void delete(Iterable<Long> ids) {
+  public void delete(Iterable<UUID> ids) {
     repo.deleteAllById(ids);
-    log.info("Deleted user(s): {}", StringUtils.limitedJoin(StreamSupport.stream(ids.spliterator(), false).map(id -> Long.toString(id)), 10, ", "));
+    log.info("Deleted user(s): {}", StringUtils.limitedJoin(StreamSupport.stream(ids.spliterator(), false).map(UUID::toString), 10, ", "));
   }
 
   public long getCount() {

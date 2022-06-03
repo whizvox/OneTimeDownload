@@ -95,7 +95,7 @@ $(document).ready(function() {
             row.append($('<td>').text(formatRelativeTime(expireDate)).attr('title', expireDate));
             row.append($('<td>').text(file.downloaded ? 'Yes' : 'No'));
             if (file.user) {
-              //row.append();
+              row.append($('<td>').text(file.user.id));
             } else {
               row.append($('<td>').text('Anonymous'));
             }

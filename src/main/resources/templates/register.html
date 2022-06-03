@@ -11,23 +11,28 @@
     <p>Something went wrong trying to register: <span id="alert-error-msg" class="fst-italic"></span></p>
   </div>
   <form id="form-register" method="post" th:action="@{/users/register}">
-    <div class="mb-3">
-      <label for="email" class="form-label">Email</label>
-      <input type="text" id="email" name="email" class="form-control">
+    <div class="mb-3 form-floating">
+      <input type="email" id="email" name="email" class="form-control">
+      <label for="email">Email</label>
+      <div id="invalid-email" class="invalid-feedback" hidden>Invalid email address</div>
+      <div id="email-taken" class="invalid-feedback" hidden>That email address is already taken</div>
     </div>
-    <div class="mb-3">
-      <label for="confirm-email" class="form-label">Confirm email</label>
-      <input type="text" id="confirm-email" class="form-control">
+    <div class="mb-3 form-floating">
+      <input type="email" id="confirm-email" class="form-control">
+      <label for="confirm-email">Confirm email</label>
+      <div id="email-mismatch" class="invalid-feedback" hidden>Emails need to match</div>
     </div>
-    <div class="mb-3">
-      <label for="password" class="form-label">Password</label>
-      <input type="password" id="password" name="password" class="form-control">
+    <div class="mb-3 form-floating">
+      <input type="password" id="password" name="password" class="form-control" th:pattern="${passwordRegex}">
+      <label for="password">Password</label>
+      <div id="invalid-password" class="invalid-feedback" hidden>Invalid password: <span th:text="${passwordRequirements}"></span></div>
     </div>
-    <div class="mb-3">
-      <label for="confirm-password" class="form-label">Confirm password</label>
+    <div class="mb-3 form-floating">
       <input type="password" id="confirm-password" class="form-control">
+      <label for="confirm-password">Confirm password</label>
+      <div id="password-mismatch" class="invalid-feedback" hidden>Passwords need to match</div>
     </div>
-    <button type="submit" class="btn btn-info">Register</button>
+    <button type="submit" class="btn btn-info" disabled>Register</button>
   </form>
   <script src="/js/register.js"></script>
 </main>

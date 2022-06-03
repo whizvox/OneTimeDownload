@@ -19,11 +19,11 @@
   <div class="container d-flex flex-wrap justify-content-center justify-content-lg-start">
     <a href="/" class="text-decoration-none col-lg-6"><img class="img-fluid" src="/img/logo-dotcom.png" alt="1TDL.com logo"/></a>
     <!--/*@thymesVar id="user" type="me.whizvox.otdl.user.User"*/-->
-    <div th:if="${user == null || !user.isLoggedIn()}" class="col-lg-6 text-end align-self-center">
+    <div th:if="${user == null || user.isGuest()}" class="col-lg-6 text-end align-self-center">
       <a href="/login" class="btn btn-outline-light me-2" id="btn-login">Login</a>
       <a href="/register" class="btn btn-info" id="btn-register">Register</a>
     </div>
-    <div th:if="${user != null && user.isLoggedIn()}" class="col-lg-6 text-end align-self-center">
+    <div th:if="${user != null && !user.isGuest()}" class="col-lg-6 text-end align-self-center">
       <button type="button" class="btn btn-info" id="btn-logout">Logout</button>
     </div>
   </div>

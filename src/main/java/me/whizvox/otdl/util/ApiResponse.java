@@ -71,6 +71,10 @@ public class ApiResponse {
     return createEntity(HttpStatus.NOT_FOUND, true, new NotFoundData("Resource not found", path));
   }
 
+  public static ResponseEntity<Object> conflict(@Nullable String msg) {
+    return createEntity(HttpStatus.CONFLICT, true, msg);
+  }
+
   public static ResponseEntity<Object> internalServerError(@Nullable String msg) {
     return createEntity(HttpStatus.INTERNAL_SERVER_ERROR, true, msg);
   }

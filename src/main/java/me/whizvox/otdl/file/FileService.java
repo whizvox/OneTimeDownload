@@ -223,11 +223,11 @@ public class FileService {
     repo.save(file);
   }
 
-  public Page<FileInfo> getFilesUploadedByUser(Long userId, Pageable pageable) {
+  public Page<FileInfo> getFilesUploadedByUser(UUID userId, Pageable pageable) {
     return repo.findAllFilesUploadedBy(userId, pageable);
   }
 
-  public Optional<FileInfo> getFileUploadedByUser(String fileId, Long userId) {
+  public Optional<FileInfo> getFileUploadedByUser(String fileId, UUID userId) {
     return repo.findFileUploadedBy(fileId, userId);
   }
 

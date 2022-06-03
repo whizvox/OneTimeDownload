@@ -1,8 +1,7 @@
 package me.whizvox.otdl.util.params;
 
 import me.whizvox.otdl.user.User;
-import me.whizvox.otdl.user.UserGroup;
-import me.whizvox.otdl.user.UserRank;
+import me.whizvox.otdl.user.UserRole;
 
 import java.util.Map;
 
@@ -11,8 +10,7 @@ public class UpdateUserParameters extends Parameters<User> {
   private static final String
       KEY_EMAIL = "email",
       KEY_PASSWORD = "password",
-      KEY_RANK = "rank",
-      KEY_GROUP = "group",
+      KEY_ROLE = "role",
       KEY_VERIFIED = "enabled";
 
   public static final Parameter<String, User> EMAIL = Parameter.<String, User>builder()
@@ -29,32 +27,24 @@ public class UpdateUserParameters extends Parameters<User> {
       .decoder(ParameterDecoders.STRING)
       .build();
 
-  public static final Parameter<UserRank, User> RANK = Parameter.<UserRank, User>builder()
-      .name(KEY_RANK)
-      .setter(User::setRank)
-      .getter(User::getRank)
-      .decoder(ParameterDecoders.ofEnum(UserRank.class))
-      .build();
-
-  public static final Parameter<UserGroup, User> GROUP = Parameter.<UserGroup, User>builder()
-      .name(KEY_GROUP)
-      .setter(User::setGroup)
-      .getter(User::getGroup)
-      .decoder(ParameterDecoders.ofEnum(UserGroup.class))
+  public static final Parameter<UserRole, User> ROLE = Parameter.<UserRole, User>builder()
+      .name(KEY_ROLE)
+      .setter(User::setRole)
+      .getter(User::getRole)
+      .decoder(ParameterDecoders.ofEnum(UserRole.class))
       .build();
 
   public static final Parameter<Boolean, User> VERIFIED = Parameter.<Boolean, User>builder()
       .name(KEY_VERIFIED)
-      .setter(User::setEnabled)
-      .getter(User::isEnabled)
+      .setter(User::setVerified)
+      .getter(User::isVerified)
       .decoder(ParameterDecoders.BOOLEAN)
       .build();
 
   private static final Map<String, Parameter<?, User>> PARAMETERS = Parameters.<User>builder()
       .add(EMAIL)
       .add(PASSWORD)
-      .add(RANK)
-      .add(GROUP)
+      .add(ROLE)
       .add(VERIFIED)
       .build();
 
@@ -76,13 +66,8 @@ public class UpdateUserParameters extends Parameters<User> {
     return this;
   }
 
-  public UpdateUserParameters rank(UserRank rank) {
-    set(KEY_RANK, rank);
-    return this;
-  }
-
-  public UpdateUserParameters group(UserGroup group) {
-    set(KEY_GROUP, group);
+  public UpdateUserParameters role(UserRole role) {
+    set(KEY_ROLE, role);
     return this;
   }
 

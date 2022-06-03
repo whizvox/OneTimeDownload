@@ -4,6 +4,7 @@ import me.whizvox.otdl.file.*;
 import me.whizvox.otdl.storage.StorageService;
 import me.whizvox.otdl.test.util.MockFile;
 import me.whizvox.otdl.test.util.MockUser;
+import me.whizvox.otdl.user.User;
 import me.whizvox.otdl.user.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -44,6 +44,15 @@ class FileControllerTests {
   private final MockMvc mvc;
   private final Path rootDir;
 
+  private User restrictedUser;
+  private User unverifiedMember;
+  private User verifiedMember;
+  private User contributor;
+  private User admin;
+
+  private FileInfo verifiedFile;
+  private FileInfo contributorFile;
+
   @Autowired
   public FileControllerTests(StorageService storage, FileController controller, FileRepository repo, FileService service, FileConfiguration config, UserRepository userRepo, MockMvc mvc) {
     this.storage = storage;
@@ -54,32 +63,40 @@ class FileControllerTests {
     this.userRepo = userRepo;
     rootDir = Paths.get("files").toAbsolutePath().normalize();
     this.mvc = mvc;
+
+    restrictedUser = unverifiedMember = verifiedMember = contributor = admin = null;
+    verifiedFile = contributorFile = null;
   }
 
   @BeforeEach
   void setUp() throws Exception {
-    userRepo.save(MockUser.restrictedUser());
-    userRepo.save(MockUser.unverifiedMember());
-    userRepo.save(MockUser.verifiedMember());
-    userRepo.save(MockUser.contributor());
-    userRepo.save(MockUser.admin());
+    restrictedUser = userRepo.save(MockUser.restrictedUser());
+    unverifiedMember = userRepo.save(MockUser.unverifiedMember());
+    verifiedMember = userRepo.save(MockUser.verifiedMember());
+    contributor = userRepo.save(MockUser.contributor());
+    admin = userRepo.save(MockUser.admin());
 
     Files.createDirectories(rootDir);
 
     repo.save(MockFile.asAnonymous());
     MockFile.copyFromResources(storage, MockFile.ANONYMOUS);
 
-    repo.save(MockFile.asVerifiedMember());
+    verifiedFile = MockFile.asVerifiedMember();
+    verifiedFile.setUser(verifiedMember);
+    repo.save(verifiedFile);
     MockFile.copyFromResources(storage, MockFile.VERIFIED_MEMBER);
 
-    repo.save(MockFile.asContributor());
+    contributorFile = MockFile.asContributor();
+    contributorFile.setUser(contributor);
+    repo.save(contributorFile);
     MockFile.copyFromResources(storage, MockFile.CONTRIBUTOR);
   }
 
   @AfterEach
   void tearDown() throws Exception {
-    files.delete(Arrays.asList(MockFile.ANONYMOUS, MockFile.VERIFIED_MEMBER, MockFile.CONTRIBUTOR));
     files.delete(StreamSupport.stream(repo.findAll().spliterator(), false).map(FileInfo::getId).collect(Collectors.toList()));
+    userRepo.deleteAll();
+    restrictedUser = unverifiedMember = verifiedMember = contributor = admin = null;
     Files.walkFileTree(rootDir, new FileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -291,7 +308,7 @@ class FileControllerTests {
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
                 .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
                 .param("password", "cGFzc3dvcmQxMjM")
-                .param("lifespan", Integer.toString(config.getMaxLifespanAnonymous())))
+                .param("lifespan", Integer.toString(config.getMaxLifespanGuest())))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -326,7 +343,7 @@ class FileControllerTests {
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
-            .param("lifespan", Integer.toString(config.getMaxLifespanAnonymous() + 1)))
+            .param("lifespan", Integer.toString(config.getMaxLifespanGuest() + 1)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -340,7 +357,7 @@ class FileControllerTests {
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.restrictedUser())))
+            .with(SecurityMockMvcRequestPostProcessors.user(restrictedUser)))
         .andDo(print())
         .andExpectAll(
             status().isForbidden(),
@@ -354,7 +371,7 @@ class FileControllerTests {
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.unverifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(unverifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isForbidden(),
@@ -368,7 +385,7 @@ class FileControllerTests {
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -382,7 +399,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", "1")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -393,7 +410,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", Integer.toString(config.getMaxLifespanMember()))
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -407,7 +424,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", "0")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -419,7 +436,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", "-1")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -431,7 +448,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", Integer.toString(config.getMaxLifespanMember() + 1))
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -445,7 +462,7 @@ class FileControllerTests {
     mvc.perform(MockMvcRequestBuilders.multipart("/files")
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+            .with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
           status().isOk()
@@ -458,7 +475,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", "1")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+            .with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -469,7 +486,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", Integer.toString(config.getMaxLifespanContributor()))
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+            .with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -483,7 +500,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", "0")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+            .with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -495,7 +512,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", "-1")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+            .with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -507,7 +524,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", Integer.toString(config.getMaxLifespanContributor() + 1))
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+            .with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -522,7 +539,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", String.valueOf(Integer.MAX_VALUE))
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -536,7 +553,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", "0")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -548,7 +565,7 @@ class FileControllerTests {
             .file(new MockMultipartFile("file", "some content here".getBytes(StandardCharsets.UTF_8)))
             .param("password", "cGFzc3dvcmQxMjM")
             .param("lifespan", "-1")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -674,19 +691,19 @@ class FileControllerTests {
   @Test
   void search_asAdmin_givenNoArguments_thenOk() throws Exception {
     mvc.perform(get("/files/search")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
             content().contentType(MediaType.APPLICATION_JSON),
-            content().json("{\"status\":200,\"error\":false,\"data\":{\"count\":3,\"total\":3,\"pages\":1,\"items\":[{\"id\":\"7jfeMbtSCGxa\",\"fileName\":\"test2.txt\",\"authToken\":\"d09277d91504bc377cd85101c506ed9377b96d59e71e304b873e\",\"uploaded\":\"2022-02-19T14:00:00\",\"md5\":\"86fb269d190d2c85f6e0468ceca42a20\",\"sha1\":\"d3486ae9136e7856bc42212385ea797094475802\",\"originalSize\":12,\"storedSize\":16,\"expires\":\"2022-02-22T08:40:00\",\"downloaded\":false,\"user\":{\"id\":4,\"email\":\"contributor@example.com\",\"password\":\"$2a$06$IhZWmIRmi8M9BMWUep2K8uGPY/iDphaDWMKZYHIK9ouYfyHJO906q\",\"rank\":\"CONTRIBUTOR\",\"group\":\"USER\",\"enabled\":true,\"accountNonExpired\":true,\"credentialsNonExpired\":true,\"accountNonLocked\":true,\"username\":\"contributor@example.com\",\"authorities\":[{\"authority\":\"ROLE_USER\"}],\"loggedIn\":true}},{\"id\":\"nOj8sn6xZ-ca\",\"fileName\":\"test1.txt\",\"authToken\":\"faca94dc79dcdbc415d186a9bce257231509c7ef5f234d8a1453\",\"uploaded\":\"2022-02-19T13:00:00\",\"md5\":\"86fb269d190d2c85f6e0468ceca42a20\",\"sha1\":\"d3486ae9136e7856bc42212385ea797094475802\",\"originalSize\":12,\"storedSize\":16,\"expires\":\"2022-02-19T14:30:00\",\"downloaded\":false,\"user\":{\"id\":3,\"email\":\"verified@example.com\",\"password\":\"$2a$06$IhZWmIRmi8M9BMWUep2K8uGPY/iDphaDWMKZYHIK9ouYfyHJO906q\",\"rank\":\"MEMBER\",\"group\":\"USER\",\"enabled\":true,\"accountNonExpired\":true,\"credentialsNonExpired\":true,\"accountNonLocked\":true,\"username\":\"verified@example.com\",\"authorities\":[{\"authority\":\"ROLE_USER\"}],\"loggedIn\":true}},{\"id\":\"R1DZ4vpu966g\",\"fileName\":\"test.txt\",\"authToken\":\"e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65\",\"uploaded\":\"2022-02-19T12:00:00\",\"md5\":\"db89bb5ceab87f9c0fcc2ab36c189c2c\",\"sha1\":\"cd36b370758a259b34845084a6cc38473cb95e27\",\"originalSize\":445,\"storedSize\":448,\"expires\":\"2022-02-19T12:30:00\",\"downloaded\":false,\"user\":null}]}}")
+            content().json("{\"status\":200,\"error\":false,\"data\":{\"count\":3,\"total\":3,\"pages\":1,\"items\":[{\"id\":\"7jfeMbtSCGxa\",\"fileName\":\"test2.txt\",\"authToken\":\"d09277d91504bc377cd85101c506ed9377b96d59e71e304b873e\",\"uploaded\":\"2022-02-19T14:00:00\",\"md5\":\"86fb269d190d2c85f6e0468ceca42a20\",\"sha1\":\"d3486ae9136e7856bc42212385ea797094475802\",\"originalSize\":12,\"storedSize\":16,\"expires\":\"2022-02-22T08:40:00\",\"downloaded\":false,\"user\":{\"email\":\"contributor@example.com\",\"password\":\"$2a$06$IhZWmIRmi8M9BMWUep2K8uGPY/iDphaDWMKZYHIK9ouYfyHJO906q\",\"rank\":\"CONTRIBUTOR\",\"group\":\"USER\",\"enabled\":true,\"accountNonExpired\":true,\"credentialsNonExpired\":true,\"accountNonLocked\":true,\"username\":\"contributor@example.com\",\"authorities\":[{\"authority\":\"ROLE_USER\"}],\"loggedIn\":true}},{\"id\":\"nOj8sn6xZ-ca\",\"fileName\":\"test1.txt\",\"authToken\":\"faca94dc79dcdbc415d186a9bce257231509c7ef5f234d8a1453\",\"uploaded\":\"2022-02-19T13:00:00\",\"md5\":\"86fb269d190d2c85f6e0468ceca42a20\",\"sha1\":\"d3486ae9136e7856bc42212385ea797094475802\",\"originalSize\":12,\"storedSize\":16,\"expires\":\"2022-02-19T14:30:00\",\"downloaded\":false,\"user\":{\"email\":\"verified@example.com\",\"password\":\"$2a$06$IhZWmIRmi8M9BMWUep2K8uGPY/iDphaDWMKZYHIK9ouYfyHJO906q\",\"rank\":\"MEMBER\",\"group\":\"USER\",\"enabled\":true,\"accountNonExpired\":true,\"credentialsNonExpired\":true,\"accountNonLocked\":true,\"username\":\"verified@example.com\",\"authorities\":[{\"authority\":\"ROLE_USER\"}],\"loggedIn\":true}},{\"id\":\"R1DZ4vpu966g\",\"fileName\":\"test.txt\",\"authToken\":\"e87ced92fe7affc86d1fcc394bda654c28103567855a4513df65\",\"uploaded\":\"2022-02-19T12:00:00\",\"md5\":\"db89bb5ceab87f9c0fcc2ab36c189c2c\",\"sha1\":\"cd36b370758a259b34845084a6cc38473cb95e27\",\"originalSize\":445,\"storedSize\":448,\"expires\":\"2022-02-19T12:30:00\",\"downloaded\":false,\"user\":null}]}}")
         );
   }
 
   @Test
   void search_asAdmin_givenPageArguments_thenOk() throws Exception {
     mvc.perform(get("/files/search")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin()))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin))
             .param("size", "1"))
         .andDo(print())
         .andExpectAll(
@@ -699,7 +716,7 @@ class FileControllerTests {
         );
 
     mvc.perform(get("/files/search")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin()))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin))
             .param("size", "1")
             .param("page", "1"))
         .andDo(print())
@@ -713,7 +730,7 @@ class FileControllerTests {
         );
 
     mvc.perform(get("/files/search")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin()))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin))
             .param("size", "1")
             .param("page", "5"))
         .andDo(print())
@@ -746,7 +763,7 @@ class FileControllerTests {
             .param("fileName", "newfilename.txt")
             .param("expires", "2022-02-19T13:30:00")
             .param("downloaded", "true")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -764,7 +781,7 @@ class FileControllerTests {
   void update_givenEmptyFileName_thenBadRequest() throws Exception {
     mvc.perform(put("/files/" + MockFile.ANONYMOUS)
             .param("fileName", "")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -778,7 +795,7 @@ class FileControllerTests {
     mvc.perform(put("/files/" + MockFile.VERIFIED_MEMBER)
             .param("fileName", "coolfilename.txt")
             .param("expires", "2022-02-19T14:45:00")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -797,7 +814,7 @@ class FileControllerTests {
             .param("fileName", "newfilename.txt")
             .param("expires", "2022-02-19T14:45:00")
             .param("downloaded", "true")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -811,7 +828,7 @@ class FileControllerTests {
     mvc.perform(put("/files/" + MockFile.VERIFIED_MEMBER)
             .param("fileName", "newfilename.txt")
             .param("expires", "2022-02-19T14:45:00")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+            .with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
             status().isNotFound(),
@@ -825,7 +842,7 @@ class FileControllerTests {
     mvc.perform(put("/files/" + MockFile.VERIFIED_MEMBER)
             .param("fileName", "newfilename.txt")
             .param("expires", "2022-02-21T14:45:00")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+            .with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -839,7 +856,7 @@ class FileControllerTests {
     mvc.perform(put("/files/" + MockFile.CONTRIBUTOR)
             .param("fileName", "newfilename.txt")
             .param("expires", "2022-04-19T14:45:00")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+            .with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
             status().isBadRequest(),
@@ -861,7 +878,7 @@ class FileControllerTests {
 
   @Test
   void getOwnFiles_thenOk() throws Exception {
-    mvc.perform(get("/files/all").with(SecurityMockMvcRequestPostProcessors.user(MockUser.verifiedMember())))
+    mvc.perform(get("/files/all").with(SecurityMockMvcRequestPostProcessors.user(verifiedMember)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -874,7 +891,7 @@ class FileControllerTests {
             jsonPath("$.data.items[0].id").value(MockFile.VERIFIED_MEMBER)
         );
 
-    mvc.perform(get("/files/all").with(SecurityMockMvcRequestPostProcessors.user(MockUser.contributor())))
+    mvc.perform(get("/files/all").with(SecurityMockMvcRequestPostProcessors.user(contributor)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -887,7 +904,7 @@ class FileControllerTests {
             jsonPath("$.data.items[0].id").value(MockFile.CONTRIBUTOR)
         );
 
-    mvc.perform(get("/files/all").with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+    mvc.perform(get("/files/all").with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -915,17 +932,21 @@ class FileControllerTests {
   void deleteBulk_asAdmin_thenOk() throws Exception {
     mvc.perform(post("/files/delete")
             .param("ids", MockFile.ANONYMOUS, MockFile.VERIFIED_MEMBER)
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
             content().contentType(MediaType.APPLICATION_JSON),
             content().json("{\"status\":200,\"error\":false,\"data\":null}")
         );
+
+    assertThat(repo.findById(MockFile.ANONYMOUS)).isEmpty();
+    assertThat(repo.findById(MockFile.VERIFIED_MEMBER)).isEmpty();
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isPresent();
 
     mvc.perform(post("/files/delete")
             .param("ids", "badid1", "badid2", "badid3")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
@@ -933,15 +954,19 @@ class FileControllerTests {
             content().json("{\"status\":200,\"error\":false,\"data\":null}")
         );
 
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isPresent();
+
     mvc.perform(post("/files/delete")
             .param("ids", MockFile.CONTRIBUTOR, "badid4")
-            .with(SecurityMockMvcRequestPostProcessors.user(MockUser.admin())))
+            .with(SecurityMockMvcRequestPostProcessors.user(admin)))
         .andDo(print())
         .andExpectAll(
             status().isOk(),
             content().contentType(MediaType.APPLICATION_JSON),
             content().json("{\"status\":200,\"error\":false,\"data\":null}")
         );
+
+    assertThat(repo.findById(MockFile.CONTRIBUTOR)).isEmpty();
   }
 
 }

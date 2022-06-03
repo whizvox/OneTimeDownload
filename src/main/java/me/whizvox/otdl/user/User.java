@@ -1,44 +1,54 @@
 package me.whizvox.otdl.user;
 
 import lombok.*;
+import org.hibernate.annotations.Type;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Id;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.UUID;
 
 @Entity(name = "users")
 @Getter @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 public class User implements UserDetails {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Type(type = "uuid-char")
+  private UUID id;
 
   private String email;
 
   private String password;
 
-  @Builder.Default
-  @Column(name = "user_rank")
-  private UserRank rank = UserRank.ANONYMOUS;
+  @Enumerated(EnumType.STRING)
+  private UserRole role;
 
-  @Builder.Default
-  @Column(name = "user_group")
-  private UserGroup group = UserGroup.USER;
+  private LocalDateTime created;
 
-  @Builder.Default
-  private boolean enabled = false;
+  private boolean verified;
+
+  public User(String email, String password, UserRole role, boolean verified) {
+    this(UUID.randomUUID(), email, password, role, LocalDateTime.now(), verified);
+  }
+
+  public User(String email, String password) {
+    this(email, password, UserRole.MEMBER, false);
+  }
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + group.name()));
+    return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
   }
 
   @Override
@@ -58,7 +68,7 @@ public class User implements UserDetails {
 
   @Override
   public boolean isAccountNonLocked() {
-    return group != UserGroup.RESTRICTED;
+    return role != UserRole.RESTRICTED;
   }
 
   @Override
@@ -68,11 +78,34 @@ public class User implements UserDetails {
 
   @Override
   public boolean isEnabled() {
-    return enabled;
+    return verified;
   }
 
-  public boolean isLoggedIn() {
-    return id != null;
+  public boolean isGuest() {
+    return id == null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    User user = (User) o;
+    return
+        verified == user.verified &&
+        Objects.equals(id, user.id) &&
+        Objects.equals(email, user.email) &&
+        Objects.equals(password, user.password) &&
+        role == user.role &&
+        Objects.equals(created, user.created);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, email, password, role, created, verified);
+  }
+
+  public static User guest() {
+    return new User(null, null, null, UserRole.GUEST, null, true);
   }
 
 }

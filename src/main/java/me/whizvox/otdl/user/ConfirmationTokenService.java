@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -26,7 +27,7 @@ public class ConfirmationTokenService {
     log.info("Saving confirmation token {}", token.getId());
   }
 
-  public void delete(Long id) {
+  public void delete(UUID id) {
     repo.deleteById(id);
     log.info("Confirmation token {} deleted", id);
   }
