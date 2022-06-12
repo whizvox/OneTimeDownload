@@ -3,6 +3,7 @@ package me.whizvox.otdl.user;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter @Setter
@@ -14,13 +15,16 @@ public class PublicUserDetails {
 
   private UserRole role;
 
-  private boolean enabled;
+  private LocalDateTime created;
+
+  private boolean verified;
 
   public PublicUserDetails(User user) {
     setId(user.getId());
     setEmail(user.getEmail());
     setRole(user.getRole());
-    setEnabled(user.isVerified());
+    setCreated(user.getCreated());
+    setVerified(user.isVerified());
   }
 
 }

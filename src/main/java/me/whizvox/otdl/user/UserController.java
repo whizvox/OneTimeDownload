@@ -1,8 +1,6 @@
 package me.whizvox.otdl.user;
 
-import me.whizvox.otdl.exception.EmailTakenException;
-import me.whizvox.otdl.exception.InvalidPasswordException;
-import me.whizvox.otdl.exception.TokenDoesNotExistException;
+import me.whizvox.otdl.exception.*;
 import me.whizvox.otdl.util.ApiResponse;
 import me.whizvox.otdl.util.PagedResponseData;
 import me.whizvox.otdl.util.RequestUtils;
@@ -16,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
@@ -98,6 +97,53 @@ public class UserController {
     newParams.setAll(params);
     users.update(id, newParams);
     return ApiResponse.ok();
+  }
+
+  @PutMapping("self/email")
+  public ResponseEntity<Object> updateEmail(
+      @RequestParam String email,
+      @RequestParam CharSequence password,
+      @AuthenticationPrincipal User user) {
+    try {
+      boolean changed = users.updateEmail(user, email, password);
+      return ApiResponse.ok(changed);
+    } catch (UnknownIdException e) {
+      return ApiResponse.badRequest("Unknown user: " + user.getId());
+    } catch (WrongPasswordException e) {
+      return ApiResponse.forbidden("Wrong password");
+    } catch (EmailTakenException e) {
+      return ApiResponse.badRequest("Email taken");
+    }
+  }
+
+  @PutMapping("self/password")
+  public ResponseEntity<Object> updatePassword(
+      @RequestParam CharSequence newPassword,
+      @RequestParam CharSequence password,
+      @AuthenticationPrincipal User user) {
+    try {
+      boolean changed = users.updatePassword(user, newPassword, password);
+      return ApiResponse.ok(changed);
+    } catch (UnknownIdException e) {
+      return ApiResponse.badRequest("Unknown user: " + user.getId());
+    } catch (WrongPasswordException e) {
+      return ApiResponse.forbidden("Wrong password");
+    } catch (InvalidPasswordException e) {
+      return ApiResponse.badRequest("Invalid password");
+    }
+  }
+
+
+  @DeleteMapping("self")
+  public ResponseEntity<Object> deactivate(
+      @RequestParam CharSequence password,
+      @AuthenticationPrincipal User user) {
+    try {
+      boolean deactivated = users.deactivate(user.getId(), password);
+      return ApiResponse.ok(deactivated);
+    } catch (WrongPasswordException e) {
+      return ApiResponse.badRequest("Wrong password");
+    }
   }
 
   @PreAuthorize("@authorizationService.hasPermission(principal, 'ADMIN')")

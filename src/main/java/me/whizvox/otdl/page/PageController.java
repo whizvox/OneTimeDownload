@@ -101,6 +101,16 @@ public class PageController {
         .addObject("page", createStandardPage("Need account confirmation", "/need-confirm"));
   }
 
+  @GetMapping("/profile")
+  public ModelAndView viewProfile(@AuthenticationPrincipal User user) {
+    if (user == null || user.isGuest()) {
+      return new ModelAndView("redirect:/");
+    }
+    return new ModelAndView("profile")
+        .addObject("page", createStandardPage("View profile", "/profile"))
+        .addObject("user", user);
+  }
+
   /*@GetMapping("contact")
   public ModelAndView contact() {
     return new ModelAndView("contact")

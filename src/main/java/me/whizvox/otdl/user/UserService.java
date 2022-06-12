@@ -1,10 +1,7 @@
 package me.whizvox.otdl.user;
 
 import lombok.extern.slf4j.Slf4j;
-import me.whizvox.otdl.exception.EmailTakenException;
-import me.whizvox.otdl.exception.InvalidPasswordException;
-import me.whizvox.otdl.exception.TokenDoesNotExistException;
-import me.whizvox.otdl.exception.UnknownIdException;
+import me.whizvox.otdl.exception.*;
 import me.whizvox.otdl.misc.EmptyJavaMailSender;
 import me.whizvox.otdl.util.StringUtils;
 import me.whizvox.otdl.util.params.Parameters;
@@ -123,6 +120,51 @@ public class UserService implements UserDetailsService {
     tokens.delete(info.getId());
   }
 
+  public boolean updateEmail(User user, String newEmail, CharSequence currentPassword) {
+    if (!encoder.matches(currentPassword, user.getPassword())) {
+      throw new WrongPasswordException();
+    }
+    // don't update if email is the same
+    if (user.getEmail().equals(newEmail)) {
+      return false;
+    }
+    if (!isEmailAvailable(newEmail)) {
+      throw new EmailTakenException();
+    }
+    user.setEmail(newEmail);
+    user.setVerified(false);
+    repo.save(user);
+    log.info("User {} has updated their email", user.getId());
+    return true;
+  }
+
+  public boolean updatePassword(User user, CharSequence newPassword, CharSequence currentPassword) {
+    if (!encoder.matches(currentPassword, user.getPassword())) {
+      throw new WrongPasswordException();
+    }
+    // don't update if password is the same
+    if (encoder.matches(newPassword, user.getPassword())) {
+      return false;
+    }
+    if (!passwordCheck.matcher(newPassword).matches()) {
+      throw new InvalidPasswordException();
+    }
+    user.setPassword(encoder.encode(newPassword));
+    repo.save(user);
+    log.info("User {} has updated their password", user.getId());
+    return true;
+  }
+
+  public boolean deactivate(UUID id, CharSequence password) {
+    return repo.findById(id).map(user -> {
+      if (!encoder.matches(password, user.getPassword())) {
+        throw new WrongPasswordException();
+      }
+      repo.delete(user);
+      return true;
+    }).orElse(false);
+  }
+
   public User update(UUID id, Parameters<User> params) {
     User user = repo.findById(id).orElseThrow(UnknownIdException::new);
     params.writeToEntity(user);
@@ -134,7 +176,7 @@ public class UserService implements UserDetailsService {
       user.setPassword(encoder.encode(user.getPassword()));
     }
     User updatedUser = repo.save(user);
-    log.info("User {} updated", id);
+    log.info("User {} has been updated", id);
     return updatedUser;
   }
 
