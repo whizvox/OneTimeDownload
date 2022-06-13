@@ -18,4 +18,8 @@ public class UserConfigurationProperties {
 
   private String emailConfirmHost;
 
+  private int verificationLinkLifetime = 60;
+
+  private int passwordResetLinkLifetime = 10;
+
 }

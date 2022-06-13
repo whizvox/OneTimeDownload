@@ -21,28 +21,6 @@ public class ApiResponse {
   @Getter @Setter
   private Object data;
 
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class ErrorData {
-
-    @Getter @Setter
-    private String message;
-
-  }
-
-  @NoArgsConstructor
-  public static class NotFoundData extends ErrorData {
-
-    @Getter @Setter
-    private String path;
-
-    public NotFoundData(String message, String path) {
-      super(message);
-      this.path = path;
-    }
-
-  }
-
   private static ResponseEntity<Object> createEntity(HttpStatus status, boolean error, Object data) {
     return new ResponseEntity<>(new ApiResponse(status.value(), error, data), status);
   }
@@ -67,8 +45,19 @@ public class ApiResponse {
     return createEntity(HttpStatus.FORBIDDEN, true, msg);
   }
 
+  public static ResponseEntity<Object> notFound(@Nullable String path, @Nullable String type) {
+    StringBuilder sb = new StringBuilder("Resource not found");
+    if (type != null) {
+      sb.append(" (").append(type).append(")");
+    }
+    if (path != null) {
+      sb.append(": ").append(path);
+    }
+    return createEntity(HttpStatus.NOT_FOUND, true, sb.toString());
+  }
+
   public static ResponseEntity<Object> notFound(@Nullable String path) {
-    return createEntity(HttpStatus.NOT_FOUND, true, new NotFoundData("Resource not found", path));
+    return notFound(path, null);
   }
 
   public static ResponseEntity<Object> conflict(@Nullable String msg) {

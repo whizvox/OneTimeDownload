@@ -3,6 +3,7 @@ package me.whizvox.otdl.page;
 import me.whizvox.otdl.exception.TokenDoesNotExistException;
 import me.whizvox.otdl.file.FileService;
 import me.whizvox.otdl.user.User;
+import me.whizvox.otdl.user.UserConfigurationProperties;
 import me.whizvox.otdl.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,12 +20,17 @@ public class PageController {
   private final PageConfiguration config;
   private final FileService files;
   private final UserService users;
+  private final UserConfigurationProperties props;
 
   @Autowired
-  public PageController(PageConfiguration config, FileService files, UserService users) {
+  public PageController(PageConfiguration config,
+                        FileService files,
+                        UserService users,
+                        UserConfigurationProperties props) {
     this.config = config;
     this.files = files;
     this.users = users;
+    this.props = props;
   }
 
   private Page createStandardPage(String title, String href) {
@@ -109,6 +115,24 @@ public class PageController {
     return new ModelAndView("profile")
         .addObject("page", createStandardPage("View profile", "/profile"))
         .addObject("user", user);
+  }
+
+  @GetMapping("/reset/{token}")
+  public ModelAndView resetPassword(@PathVariable String token) {
+    return new ModelAndView("reset_password")
+        .addObject("page", createStandardPage("Reset password", "/reset"))
+        .addObject("passwordRegex", props.getPasswordRequirementRegex())
+        .addObject("passwordRequirements", props.getPasswordRequirementDescription())
+        .addObject("token", token);
+  }
+
+  @GetMapping("/forgot-password")
+  public ModelAndView forgotPassword(@AuthenticationPrincipal User user) {
+    if (user != null && !user.isGuest()) {
+      return new ModelAndView("redirect:/");
+    }
+    return new ModelAndView("forgot_password")
+        .addObject("page", createStandardPage("Forgot password", "/forgot-password"));
   }
 
   /*@GetMapping("contact")

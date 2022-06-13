@@ -106,7 +106,7 @@ public class FileController {
       }
     }
     // fake not found response
-    return ApiResponse.notFound(id);
+    return ApiResponse.notFound(id, "file");
   }
 
   @GetMapping("dl/{id}")
@@ -133,7 +133,7 @@ public class FileController {
         Arrays.fill(pwdArr, '\u0000');
       }
     }
-    return ApiResponse.notFound(id);
+    return ApiResponse.notFound(id, "file");
   }
 
   @GetMapping("available/{id}")
@@ -292,9 +292,9 @@ public class FileController {
         files.update(file);
         return ApiResponse.ok();
       } catch (UnknownIdException e) {
-        return ApiResponse.notFound(id);
+        return ApiResponse.notFound(id, "file");
       }
-    }).orElse(ApiResponse.notFound(id));
+    }).orElse(ApiResponse.notFound(id, "file"));
   }
 
   @GetMapping("all")

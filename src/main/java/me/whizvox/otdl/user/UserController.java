@@ -29,7 +29,8 @@ public class UserController {
   private final UserConfigurationProperties config;
 
   @Autowired
-  public UserController(UserService users, UserConfigurationProperties config) {
+  public UserController(UserService users,
+                        UserConfigurationProperties config) {
     this.users = users;
     this.config = config;
   }
@@ -37,7 +38,7 @@ public class UserController {
   @PreAuthorize("@authorizationService.canAccessUserDetails(principal, #id)")
   @GetMapping("{id}")
   public ResponseEntity<Object> getUserDetails(@PathVariable UUID id) {
-    return users.getUserDetails(id).map(ApiResponse::ok).orElseGet(() -> ApiResponse.notFound("" + id));
+    return users.getUserDetails(id).map(ApiResponse::ok).orElseGet(() -> ApiResponse.notFound(id.toString(), "user"));
   }
 
   @GetMapping("available")
@@ -84,7 +85,7 @@ public class UserController {
       users.confirmUser(token);
       return ApiResponse.ok();
     } catch (TokenDoesNotExistException e) {
-      return ApiResponse.notFound(token);
+      return ApiResponse.notFound(token, "verification token");
     }
   }
 
@@ -133,7 +134,6 @@ public class UserController {
     }
   }
 
-
   @DeleteMapping("self")
   public ResponseEntity<Object> deactivate(
       @RequestParam CharSequence password,
@@ -143,6 +143,27 @@ public class UserController {
       return ApiResponse.ok(deactivated);
     } catch (WrongPasswordException e) {
       return ApiResponse.badRequest("Wrong password");
+    }
+  }
+
+  @PostMapping("reset")
+  public ResponseEntity<Object> requestPasswordReset(@RequestParam String email) {
+    boolean sent = users.requestPasswordReset(email);
+    return ApiResponse.ok(sent);
+  }
+
+  @PutMapping("reset")
+  public ResponseEntity<Object> resetPassword(
+      @RequestParam UUID token,
+      @RequestParam CharSequence password) {
+    try {
+      if (users.resetPassword(token, password)) {
+        return ApiResponse.ok();
+      } else {
+        return ApiResponse.notFound(token.toString(), "password reset token");
+      }
+    } catch (InvalidPasswordException e) {
+      return ApiResponse.badRequest("Invalid password");
     }
   }
 

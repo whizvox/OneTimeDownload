@@ -113,6 +113,67 @@ function getCSRFHeader() {
   return res;
 }
 
+function showErrorAlert(alertElem, warning, xhr) {
+  let errorHeader = "Unexpected response";
+  switch (xhr.status) {
+    case 400: {
+      errorHeader = "Bad request";
+      break;
+    }
+    case 401: {
+      errorHeader = "Unauthorized";
+      break;
+    }
+    case 403: {
+      errorHeader = "Forbidden";
+      break;
+    }
+    case 404: {
+      errorHeader = "Not found";
+      break;
+    }
+    case 409: {
+      errorHeader = "Conflict";
+      break;
+    }
+    case 413: {
+      errorHeader = "Payload too large";
+      break;
+    }
+    case 500: {
+      errorHeader = "Internal server error";
+      break;
+    }
+  }
+  let errorBody = xhr.responseText;
+  if (xhr.hasOwnProperty('responseJSON')) {
+    let res = xhr.responseJSON;
+    if (res.hasOwnProperty('data')) {
+      errorBody = res.data;
+    } else {
+      errorBody = res;
+    }
+  }
+  showAlert(alertElem, warning ? 'warning' : 'danger', errorBody, xhr.status + ': ' + errorHeader);
+}
+
+function showAlert(alertElem, alertType, text, header = undefined) {
+  alertElem.removeClass('alert-danger alert-info alert-warning alert-primary alert-secondary alert-success alert-light alert-dark');
+  alertElem.addClass('alert-' + alertType);
+  alertElem.contents().remove();
+  if (header !== undefined) {
+    let headerElem = $('<h3>');
+    headerElem.text(header);
+    let bodyElem = $('<p>');
+    bodyElem.text(text);
+    alertElem.append(headerElem);
+    alertElem.append(bodyElem);
+  } else {
+    alertElem.text(text);
+  }
+  showElement(alertElem);
+}
+
 $(document).ready(function() {
   $('#btn-logout').on('click', function() {
     $.ajax({

@@ -33,6 +33,7 @@ public class UserService implements UserDetailsService {
 
   private final UserRepository repo;
   private final ConfirmationTokenService tokens;
+  private final PasswordResetTokenService passwordResetTokens;
   private final PasswordEncoder encoder;
   private final JavaMailSender emailSender;
   private final UserConfigurationProperties config;
@@ -41,9 +42,15 @@ public class UserService implements UserDetailsService {
   private final boolean shouldConfirmEmail;
 
   @Autowired
-  public UserService(UserRepository repo, ConfirmationTokenService tokens, PasswordEncoder encoder, JavaMailSender emailSender, UserConfigurationProperties config) {
+  public UserService(UserRepository repo,
+                     ConfirmationTokenService tokens,
+                     PasswordResetTokenService passwordResetTokens,
+                     PasswordEncoder encoder,
+                     JavaMailSender emailSender,
+                     UserConfigurationProperties config) {
     this.repo = repo;
     this.tokens = tokens;
+    this.passwordResetTokens = passwordResetTokens;
     this.encoder = encoder;
     this.emailSender = emailSender;
     this.config = config;
@@ -178,6 +185,34 @@ public class UserService implements UserDetailsService {
     User updatedUser = repo.save(user);
     log.info("User {} has been updated", id);
     return updatedUser;
+  }
+
+  public boolean requestPasswordReset(String email) {
+    return repo.findByEmail(email).map(user -> {
+      PasswordResetToken token = passwordResetTokens.create(user);
+      SimpleMailMessage msg = new SimpleMailMessage();
+      msg.setTo(user.getEmail());
+      msg.setFrom(config.getEmailFromAddress());
+      msg.setSubject("Reset password");
+      msg.setText("Click here to reset your password: " + config.getEmailConfirmHost() + "/reset/" + token.getId());
+      emailSender.send(msg);
+      log.info("Created password reset token for user ({}) and emailed link", user.getId());
+      return true;
+    }).orElse(false);
+  }
+
+  public boolean resetPassword(UUID tokenId, CharSequence password) {
+    if (!passwordCheck.matcher(password).matches()) {
+      throw new InvalidPasswordException();
+    }
+    return passwordResetTokens.getToken(tokenId).map(token -> {
+      User user = token.getUser();
+      user.setPassword(encoder.encode(password));
+      repo.save(user);
+      passwordResetTokens.delete(token.getId());
+      log.info("User {} has reset their password", user.getId());
+      return true;
+    }).orElse(false);
   }
 
   public Page<User> search(Specification<User> spec, Pageable pageable) {
