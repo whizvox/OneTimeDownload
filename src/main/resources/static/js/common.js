@@ -113,6 +113,21 @@ function getCSRFHeader() {
   return res;
 }
 
+/**
+ * Given an XMLHttpRequest, attempt to derive a 1TDL API response object
+ * @param xhr XMLHttpRequest
+ * @return The response object, or null if one could not be found
+ */
+function parseApiResponse(xhr) {
+  if (xhr.hasOwnProperty('responseJSON')) {
+    let res = xhr.responseJSON;
+    if (res.hasOwnProperty('error') && res.hasOwnProperty('status') && res.hasOwnProperty('data')) {
+      return res;
+    }
+  }
+  return null;
+}
+
 function showErrorAlert(alertElem, warning, xhr) {
   let errorHeader = "Unexpected response";
   switch (xhr.status) {

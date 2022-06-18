@@ -8,7 +8,7 @@
 <main class="container">
   <h1 class="mb-3">Log in</h1>
   <p th:if="${param.verified}" class="alert alert-success alert-dismissible">
-    Thank you for confirming your account. You may log in now.
+    Thank you for verifying your account. You can now log in.
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </p>
   <p th:if="${param.error}" class="alert alert-danger alert-dismissible">
@@ -26,6 +26,9 @@
   <p th:if="${param.reset}" class="alert alert-success alert-dismissible">
     Password successfully reset
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </p>
+  <p th:if="${param.created}" class="alert alert-success alert-dismissible">
+    Your account has been successfully created. You can now log in.
   </p>
   <form id="form-login" method="post" th:action="@{/login}">
     <div class="mb-3">

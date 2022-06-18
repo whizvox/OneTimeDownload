@@ -1,6 +1,6 @@
 $(document).ready(function() {
-  let alertError = $('#alert-error');
-  let alertErrorMsg = $('#alert-error-msg');
+
+  let alert = $('#alert');
 
   let form = $('#form-register');
   let emailField = form.find('input[name=email]');
@@ -15,13 +15,13 @@ $(document).ready(function() {
   let invalidPasswordAlert = $('#invalid-password');
   let passwordMismatchAlert = $('#password-mismatch');
 
-  function validateField(field, invalid, validator) {
-    if (validator()) {
-      field.removeClass('invalid');
-      hideElement(invalid);
+  function validateField(field, feedback, isValidFunc) {
+    if (isValidFunc()) {
+      field.removeClass('is-invalid');
+      hideElement(feedback);
     } else {
-      field.addClass('invalid');
-      showElement(invalid);
+      field.addClass('is-invalid');
+      showElement(feedback);
     }
     updateSubmitButton();
   }
@@ -35,7 +35,7 @@ $(document).ready(function() {
   }
 
   function isPasswordValid() {
-    return passwordField.val().match(new RegExp(passwordField.attr('pattern')));
+    return passwordField.is(':valid');
   }
 
   function isPasswordConfirmValid() {
@@ -57,67 +57,77 @@ $(document).ready(function() {
 
   emailField.on('input', function() {
     validateField($(this), invalidEmailAlert, isEmailValid);
-  });
-
-  confirmEmailField.on('input', function() {
-    if ($(this).val() === emailField.val()) {
-      $(this).removeClass('invalid');
-      hideElement(emailMismatchAlert);
-    } else {
-      $(this).addClass('invalid');
-      showElement(emailMismatchAlert);
-    }
+    validateField(confirmEmailField, emailMismatchAlert, isEmailConfirmValid);
     updateSubmitButton();
   });
 
-  confirmPasswordField.on('input', function() {
-    if ($(this).val() === passwordField.val()) {
-      $(this).removeClass('invalid');
-      hideElement(passwordMismatchAlert);
-    } else {
-      $(this).addClass('invalid');
-      showElement(passwordMismatchAlert);
-    }
+  confirmEmailField.on('input', function() {
+    validateField($(this), emailMismatchAlert, isEmailConfirmValid);
     updateSubmitButton();
   });
 
   passwordField.on('input', function() {
-    const pattern = new RegExp($(this).attr('pattern'));
-    if ($(this).val().match(pattern)) {
-      $(this).removeClass('invalid');
-      hideElement(invalidPasswordAlert);
-    } else {
-      $(this).addClass('invalid');
-      showElement(invalidPasswordAlert);
-    }
+    validateField($(this), invalidPasswordAlert, isPasswordValid);
+    validateField(confirmPasswordField, passwordMismatchAlert, isPasswordConfirmValid);
+    updateSubmitButton();
+  });
+
+  confirmPasswordField.on('input', function() {
+    validateField($(this), passwordMismatchAlert, isPasswordConfirmValid);
     updateSubmitButton();
   });
 
   form.submit(function(event) {
     event.preventDefault();
-    hideElement(alertError);
-    alertError.removeClass('alert-warn', 'alert-danger');
+    $('input').removeClass('is-invalid');
+    hideElement($('.invalid-feedback'));
+    disableElement(submitButton);
+    submitButton.text("Registering...");
+    hideElement(alert);
     $.ajax({
-      url: $(this).attr('action'),
-      type: $(this).attr('method'),
-      data: new FormData(form[0]),
+      url: '/users/available',
+      type: 'get',
+      data: `email=${emailField.val()}`,
       headers: getCSRFHeader(),
       processData: false,
       contentType: false,
       cache: false,
       success: function(data) {
-        $(location).attr('href', '/need-confirm');
+        if (data.data) {
+          $.ajax({
+            url: '/users/register',
+            type: 'post',
+            data: new FormData(form[0]),
+            headers: getCSRFHeader(),
+            processData: false,
+            contentType: false,
+            cache: false,
+            success: function(data) {
+              if (data.data.verified) {
+                $(location).attr('href', '/login?created');
+              } else {
+                $(location).attr('href', '/need-verify');
+              }
+            },
+            error: function(xhr) {
+              showErrorAlert(alert, false, xhr);
+            },
+            complete: function() {
+              enableElement(submitButton);
+              submitButton.text("Register");
+            }
+          });
+        } else {
+          emailField.addClass('is-invalid');
+          showElement(emailTakenAlert);
+          enableElement(submitButton);
+          submitButton.text("Register");
+        }
       },
       error: function(xhr) {
-        alertError.attr('hidden', false);
-        let response = xhr.responseJSON;
-        if (xhr.status === 400 && response !== null) {
-          alertError.addClass('alert-warn');
-          alertErrorMsg.text(response.data.message);
-        } else {
-          alertError.addClass('alert-danger');
-          alertErrorMsg.text(xhr.response);
-        }
+        showErrorAlert(alert, false, xhr);
+        enableElement(submitButton);
+        submitButton.text("Register");
       }
     })
   });

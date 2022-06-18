@@ -7,10 +7,8 @@
 <header th:replace="fragments/common :: header"></header>
 <main class="container">
   <h1 class="mb-3">Register as new user</h1>
-  <div id="alert-error" class="mb-3 alert" hidden>
-    <p>Something went wrong trying to register: <span id="alert-error-msg" class="fst-italic"></span></p>
-  </div>
-  <form id="form-register" method="post" th:action="@{/users/register}">
+  <div id="alert" class="mb-3 alert" hidden></div>
+  <form id="form-register">
     <div class="mb-3 form-floating">
       <input type="email" id="email" name="email" class="form-control">
       <label for="email">Email</label>

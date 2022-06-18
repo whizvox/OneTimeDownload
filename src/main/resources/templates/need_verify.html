@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${page.lang}">
+<head th:replace="fragments/common :: head">
+  <title>Need confirm</title>
+</head>
+<body>
+<header th:replace="fragments/common :: header"></header>
+<main class="container">
+  <p>Thank you for registering. However, your email address needs to be verified for you to upload any files to this
+    site. You should receive an email with a link that will verify your account. If you don't see it within a few
+    minutes, check your spam folder.</p>
+  <p>If you still don't see it, log into your account, go to <a href="/profile">your profile</a> and re-send the
+    verification link.</p>
+  <p>If you are still experiencing issues, please <a href="/contact">contact us</a>. <em>Do not give out your password!
+  </em></p>
+</main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
+</html>

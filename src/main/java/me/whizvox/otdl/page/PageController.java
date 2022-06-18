@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
-
 @RestController
 public class PageController {
 
@@ -40,12 +38,16 @@ public class PageController {
     return page;
   }
 
-  @GetMapping({"/", "index", "home"})
-  public ModelAndView index(@AuthenticationPrincipal User user, HttpServletRequest req) {
-    req.isUserInRole("ADMIN");
+  @GetMapping("/")
+  public ModelAndView index(@AuthenticationPrincipal User user) {
     return new ModelAndView("upload")
         .addObject("page", createStandardPage("Home", "/"))
         .addObject("user", user);
+  }
+
+  @GetMapping({"/index", "/home"})
+  public ModelAndView indexAliases() {
+    return new ModelAndView("redirect:/");
   }
 
   @GetMapping("/view/{fileId}")
@@ -78,7 +80,9 @@ public class PageController {
   public ModelAndView register(@AuthenticationPrincipal User user) {
     if (user == null || !user.isGuest()) {
       return new ModelAndView("register")
-          .addObject("page", createStandardPage("Register", "/register"));
+          .addObject("page", createStandardPage("Register", "/register"))
+          .addObject("passwordRegex", props.getPasswordRequirementRegex())
+          .addObject("passwordRequirements", props.getPasswordRequirementDescription());
     }
     return new ModelAndView("redirect:/");
   }
@@ -108,13 +112,16 @@ public class PageController {
     return new ModelAndView("redirect:/?verified");
   }
 
-  @GetMapping("/need-confirm")
+  @GetMapping("/need-verify")
   public ModelAndView needConfirm(@AuthenticationPrincipal User user) {
     if (user != null && user.isGuest()) {
       return new ModelAndView("redirect:/");
     }
-    return new ModelAndView("need-confirm")
-        .addObject("page", createStandardPage("Need account confirmation", "/need-confirm"));
+    if (users.getShouldVerifyEmail()) {
+      return new ModelAndView("need_verify")
+          .addObject("page", createStandardPage("Need account confirmation", "/need-verify"));
+    }
+    return new ModelAndView("redirect:/login?created");
   }
 
   @GetMapping("/profile")

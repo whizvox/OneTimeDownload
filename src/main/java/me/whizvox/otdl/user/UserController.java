@@ -47,7 +47,8 @@ public class UserController {
   }
 
   @PostMapping("register")
-  public ResponseEntity<Object> register(@RequestParam(required = false) String email, @RequestParam(required = false) String password) {
+  public ResponseEntity<Object> register(@RequestParam(required = false) String email,
+                                         @RequestParam(required = false) String password) {
     if (email == null) {
       return ApiResponse.badRequest("Email must be defined");
     }

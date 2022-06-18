@@ -39,7 +39,7 @@ public class UserService implements UserDetailsService {
   private final UserConfigurationProperties config;
 
   private final Pattern passwordCheck;
-  private final boolean shouldConfirmEmail;
+  private final boolean shouldVerifyEmail;
 
   @Autowired
   public UserService(UserRepository repo,
@@ -55,13 +55,17 @@ public class UserService implements UserDetailsService {
     this.emailSender = emailSender;
     this.config = config;
     // TODO Not a good way to check, should somehow include otdl.email.enable value
-    shouldConfirmEmail = !(emailSender instanceof EmptyJavaMailSender);
+    shouldVerifyEmail = !(emailSender instanceof EmptyJavaMailSender);
 
     try {
       passwordCheck = Pattern.compile(config.getPasswordRequirementRegex());
     } catch (PatternSyntaxException e) {
       throw new RuntimeException("Invalid regex for password validation", e);
     }
+  }
+
+  public boolean getShouldVerifyEmail() {
+    return shouldVerifyEmail;
   }
 
   public Optional<User> getUserDetails(UUID id) {
@@ -87,7 +91,7 @@ public class UserService implements UserDetailsService {
       throw new EmailTakenException();
     }
     User user = new User(UUID.randomUUID(), email, encoder.encode(password), UserRole.MEMBER, LocalDateTime.now(), false);
-    if (!shouldConfirmEmail) {
+    if (!shouldVerifyEmail) {
       user.setVerified(true);
       repo.save(user);
       log.info("New user {} registered and auto-verified", user.getId());
