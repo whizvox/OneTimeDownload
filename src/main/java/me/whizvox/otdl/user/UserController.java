@@ -6,6 +6,8 @@ import me.whizvox.otdl.util.PagedResponseData;
 import me.whizvox.otdl.util.RequestUtils;
 import me.whizvox.otdl.util.params.UpdateUserParameters;
 import net.kaczmarzyk.spring.data.jpa.domain.Equal;
+import net.kaczmarzyk.spring.data.jpa.domain.GreaterThanOrEqual;
+import net.kaczmarzyk.spring.data.jpa.domain.LessThanOrEqual;
 import net.kaczmarzyk.spring.data.jpa.domain.LikeIgnoreCase;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.And;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.Spec;
@@ -184,7 +186,9 @@ public class UserController {
           @Spec(params = "id", path = "id", spec = Equal.class),
           @Spec(params = "email", path = "email", spec = LikeIgnoreCase.class),
           @Spec(params = "role", path = "role", spec = Equal.class),
-          @Spec(params = "enabled", path = "enabled", spec = Equal.class)
+          @Spec(params = "verified", path = "verified", spec = Equal.class),
+          @Spec(params = "createdAfter", path = "created", spec = GreaterThanOrEqual.class),
+          @Spec(params = "createdBefore", path = "created", spec = LessThanOrEqual.class)
       }) Specification<User> spec,
       Pageable pageable) {
     return ApiResponse.ok(

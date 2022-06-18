@@ -32,12 +32,21 @@
       <label for="role">Role</label>
     </div>
     <div class="mb-3 form-floating">
-      <select id="enabled" name="enabled" class="form-select">
+      <select id="verified" name="verified" class="form-select">
         <option value="" selected>Any</option>
         <option value="false">No</option>
         <option value="true">Yes</option>
       </select>
-      <label for="enabled">Email verified</label>
+      <label for="verified">Email verified</label>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">When created</label>
+      <div class="input-group">
+        <span class="input-group-text">After</span>
+        <input type="datetime-local" step=1 name="createdAfter" class="form-control">
+        <span class="input-group-text">Before</span>
+        <input type="datetime-local" step=1 name="createdBefore" class="form-control">
+      </div>
     </div>
     <button type="submit" class="btn btn-info">Search</button>
   </form>
