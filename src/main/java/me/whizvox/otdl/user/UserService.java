@@ -32,7 +32,7 @@ import java.util.stream.StreamSupport;
 public class UserService implements UserDetailsService {
 
   private final UserRepository repo;
-  private final ConfirmationTokenService tokens;
+  private final EmailVerificationTokenService tokens;
   private final PasswordResetTokenService passwordResetTokens;
   private final PasswordEncoder encoder;
   private final JavaMailSender emailSender;
@@ -43,7 +43,7 @@ public class UserService implements UserDetailsService {
 
   @Autowired
   public UserService(UserRepository repo,
-                     ConfirmationTokenService tokens,
+                     EmailVerificationTokenService tokens,
                      PasswordResetTokenService passwordResetTokens,
                      PasswordEncoder encoder,
                      JavaMailSender emailSender,
@@ -90,20 +90,26 @@ public class UserService implements UserDetailsService {
     if (!shouldConfirmEmail) {
       user.setVerified(true);
       repo.save(user);
-      log.info("New user {} registered and enabled", user.getId());
+      log.info("New user {} registered and auto-verified", user.getId());
       return user;
     }
     repo.save(user);
-    ConfirmationToken token = new ConfirmationToken(user);
+    sendVerificationEmail(user);
+    log.info("New user {} registered", user.getId());
+    return user;
+  }
+
+  public void sendVerificationEmail(User user) {
+    tokens.deleteAllByUser(user.getId());
+    EmailVerificationToken token = new EmailVerificationToken(user);
     tokens.store(token);
     SimpleMailMessage msg = new SimpleMailMessage();
     msg.setTo(user.getEmail());
     msg.setFrom(config.getEmailFromAddress());
     msg.setSubject(config.getEmailSubject());
-    msg.setText("Click here to confirm your account: " + config.getEmailConfirmHost() + "/confirm/" + token.getToken());
+    msg.setText("Click here to verify your account: " + config.getEmailConfirmHost() + "/verify/" + token.getToken());
     emailSender.send(msg);
-    log.info("New user {} registered, email sent to {} for verification", user.getId(), StringUtils.getObscuredEmail(user.getEmail()));
-    return user;
+    log.info("Email sent to {} for verification", user.getEmail());
   }
 
   public User createUser(String email, CharSequence password, UserRole role, boolean enabled) {
@@ -115,11 +121,11 @@ public class UserService implements UserDetailsService {
   }
 
   public void confirmUser(String token) {
-    Optional<ConfirmationToken> infoOp = tokens.getTokenInfo(token);
+    Optional<EmailVerificationToken> infoOp = tokens.getTokenInfo(token);
     if (infoOp.isEmpty()) {
       throw new TokenDoesNotExistException();
     }
-    ConfirmationToken info = infoOp.get();
+    EmailVerificationToken info = infoOp.get();
     User user = info.getUser();
     user.setVerified(true);
     repo.save(user);
@@ -127,7 +133,7 @@ public class UserService implements UserDetailsService {
     tokens.delete(info.getId());
   }
 
-  public boolean updateEmail(User user, String newEmail, CharSequence currentPassword) {
+  public boolean updateEmail(User user, String newEmail, CharSequence currentPassword, boolean sendVerificationLink) {
     if (!encoder.matches(currentPassword, user.getPassword())) {
       throw new WrongPasswordException();
     }
@@ -142,6 +148,9 @@ public class UserService implements UserDetailsService {
     user.setVerified(false);
     repo.save(user);
     log.info("User {} has updated their email", user.getId());
+    if (sendVerificationLink) {
+      sendVerificationEmail(user);
+    }
     return true;
   }
 

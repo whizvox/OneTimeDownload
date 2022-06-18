@@ -7,9 +7,17 @@
   <div id="upload-alert" class="mb-3 alert" hidden>
     Could not upload file: <span id="upload-alert-code" class="fw-bold"></span> <span id="upload-alert-message" class="fst-italic"></span>
   </div>
-  <h3 class="alert alert-warning alert-dismissible" th:if="${user != null && !user.isGuest() && !user.isVerified()}">
-    Your email has not yet been verified.
-  </h3>
+  <div class="alert alert-secondary alert-dismissible" th:if="${param.expired}">
+    Email verification token expired.
+  </div>
+  <div class="alert alert-warning alert-dismissible" th:if="${user != null && !user.isGuest() && !user.isVerified()}">
+    Your email address has not yet been verified. Go to <a href="/profile">your profile</a> if you need a verification
+    link.
+  </div>
+  <div class="alert alert-success alert-dismissible" th:if="${param.verified}">
+    Your email address has been verified!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
   <form id="upload-file">
     <div class="text-center justify-content-center mb-3">
       <label for="file">

@@ -3,7 +3,7 @@ package me.whizvox.otdl.server;
 import me.whizvox.otdl.file.FileService;
 import me.whizvox.otdl.task.RestartServerTask;
 import me.whizvox.otdl.task.ShutdownServerTask;
-import me.whizvox.otdl.user.ConfirmationTokenService;
+import me.whizvox.otdl.user.EmailVerificationTokenService;
 import me.whizvox.otdl.user.UserService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +20,12 @@ public class ServerService implements ApplicationContextAware {
 
   private FileService files;
   private UserService users;
-  private ConfirmationTokenService tokens;
+  private EmailVerificationTokenService tokens;
   private LocalDateTime startTime;
   private ApplicationContext ctx;
 
   @Autowired
-  public ServerService(FileService files, UserService users, ConfirmationTokenService tokens) {
+  public ServerService(FileService files, UserService users, EmailVerificationTokenService tokens) {
     this.files = files;
     this.users = users;
     this.tokens = tokens;

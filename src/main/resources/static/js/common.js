@@ -149,9 +149,16 @@ function showErrorAlert(alertElem, warning, xhr) {
   if (xhr.hasOwnProperty('responseJSON')) {
     let res = xhr.responseJSON;
     if (res.hasOwnProperty('data')) {
-      errorBody = res.data;
+      if (typeof(res.data) !== 'object') {
+        errorBody = res.data;
+      } else {
+        errorBody = JSON.stringify(res.data);
+      }
+    } else if (res.hasOwnProperty('timestamp') && res.hasOwnProperty('trace')) {
+      // FIXME Change default Spring error response to something less revealing (no stacktrace)
+      errorBody = "TIMESTAMP: " + res.timestamp;
     } else {
-      errorBody = res;
+      errorBody = JSON.stringify(res);
     }
   }
   showAlert(alertElem, warning ? 'warning' : 'danger', errorBody, xhr.status + ': ' + errorHeader);

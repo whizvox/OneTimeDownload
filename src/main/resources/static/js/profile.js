@@ -1,7 +1,8 @@
 $(document).ready(function() {
 
+  const generalAlert = $('#general-alert');
+  const accountCreationTimestamp = $('#account-creation-timestamp');
   const btnChangeEmail = $('#btn-change-email');
-
   const modalChangeEmail = $('#modal-change-email');
   const formChangeEmail = $('#form-change-email');
   const alertChangeEmail = modalChangeEmail.find('.alert');
@@ -13,6 +14,10 @@ $(document).ready(function() {
   const inputChangeEmail_password = $('#password-change-email');
   const feedback_changeEmail_wrongPassword = $('#feedback-change-email-wrong-password');
   const btnApplyChangeEmail = $('#btn-apply-change-email');
+  const btnSendVerificationEmail = $('#btn-send-verification-email');
+
+  // update account creation timestamp to JS's default date format
+  accountCreationTimestamp.text(new Date(accountCreationTimestamp.text()));
 
   function checkConfirmEmailMatches() {
     if (inputChangeEmail_email.val() !== inputChangeEmail_confirmEmail.val()) {
@@ -84,7 +89,7 @@ $(document).ready(function() {
             cache: false,
             success: function(data) {
               if (data.data) {
-                $(document).reload();
+                location.reload();
               } else {
                 enableElement(btnApplyChangeEmail);
                 btnApplyChangeEmail.text('Apply changes');
@@ -112,6 +117,28 @@ $(document).ready(function() {
       },
       complete: function() {
 
+      }
+    });
+  });
+
+  btnSendVerificationEmail.click(function() {
+    disableElement($(this));
+    $(this).text("Sending...");
+    $.ajax({
+      url: '/users/send-verification-email',
+      type: 'post',
+      headers: getCSRFHeader(),
+      contentType: false,
+      cache: false,
+      success: function() {
+        showAlert(generalAlert, 'info', "Verification link sent. Check your email's inbox!");
+      },
+      error: function(xhr) {
+        showErrorAlert(generalAlert, false, xhr);
+      },
+      complete: function() {
+        enableElement(btnSendVerificationEmail);
+        btnSendVerificationEmail.text("Resend verification email");
       }
     });
   });

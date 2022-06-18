@@ -9,10 +9,11 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity(name = "confirmation_tokens")
+@Entity
+@Table(name = "email_verification_tokens")
 @Getter @Setter
 @NoArgsConstructor
-public class ConfirmationToken {
+public class EmailVerificationToken {
 
   @Id
   @Type(type = "uuid-char")
@@ -26,7 +27,7 @@ public class ConfirmationToken {
   @JoinColumn(nullable = false, name = "user_id")
   private User user;
 
-  public ConfirmationToken(User user) {
+  public EmailVerificationToken(User user) {
     this.user = user;
     id = UUID.randomUUID();
     created = LocalDateTime.now();

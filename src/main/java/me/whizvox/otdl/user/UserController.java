@@ -76,8 +76,8 @@ public class UserController {
     }
   }
 
-  @PostMapping("confirm/{token}")
-  public ResponseEntity<Object> confirmUser(@PathVariable(required = false) String token) {
+  @PostMapping("verify/{token}")
+  public ResponseEntity<Object> verifyUserEmail(@PathVariable(required = false) String token) {
     if (token == null) {
       return ApiResponse.badRequest("Token must be defined");
     }
@@ -87,6 +87,15 @@ public class UserController {
     } catch (TokenDoesNotExistException e) {
       return ApiResponse.notFound(token, "verification token");
     }
+  }
+
+  @PostMapping("send-verification-email")
+  public ResponseEntity<Object> sendVerificationEmail(@AuthenticationPrincipal User user) {
+    if (user == null || user.isGuest()) {
+      return ApiResponse.unauthorized();
+    }
+    users.sendVerificationEmail(user);
+    return ApiResponse.ok();
   }
 
   @PutMapping("{id}")
@@ -106,7 +115,7 @@ public class UserController {
       @RequestParam CharSequence password,
       @AuthenticationPrincipal User user) {
     try {
-      boolean changed = users.updateEmail(user, email, password);
+      boolean changed = users.updateEmail(user, email, password, true);
       return ApiResponse.ok(changed);
     } catch (UnknownIdException e) {
       return ApiResponse.badRequest("Unknown user: " + user.getId());

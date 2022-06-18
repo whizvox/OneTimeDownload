@@ -1,7 +1,7 @@
 package me.whizvox.otdl.task;
 
 import me.whizvox.otdl.file.FileService;
-import me.whizvox.otdl.user.ConfirmationTokenService;
+import me.whizvox.otdl.user.EmailVerificationTokenService;
 import me.whizvox.otdl.user.PasswordResetTokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +16,11 @@ public class PurgeExpiredEntitiesTask {
   private static final Logger LOG = LoggerFactory.getLogger(PurgeExpiredEntitiesTask.class);
 
   private FileService files;
-  private ConfirmationTokenService confirmationTokens;
+  private EmailVerificationTokenService confirmationTokens;
   private PasswordResetTokenService passwordResetTokens;
 
   public PurgeExpiredEntitiesTask(FileService files,
-                                  ConfirmationTokenService confirmationTokens,
+                                  EmailVerificationTokenService confirmationTokens,
                                   PasswordResetTokenService passwordResetTokens) {
     this.files = files;
     this.confirmationTokens = confirmationTokens;

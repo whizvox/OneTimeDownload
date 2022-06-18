@@ -90,12 +90,22 @@ public class PageController {
         .addObject("user", user);
   }
 
-  @GetMapping("/confirm/{token}")
-  public ModelAndView confirm(@PathVariable String token) {
+  @GetMapping("/verify/{token}")
+  public ModelAndView verify(@PathVariable String token,
+                             @AuthenticationPrincipal User user) {
     try {
       users.confirmUser(token);
-    } catch (TokenDoesNotExistException ignored) {}
-    return new ModelAndView("redirect:/login?confirmed");
+      // successful
+      if (user != null) {
+        user.setVerified(true);
+      }
+    } catch (TokenDoesNotExistException ignored) {
+      return new ModelAndView("redirect:/?expired");
+    }
+    if (user == null || user.isGuest()) {
+      return new ModelAndView("redirect:/login?verified");
+    }
+    return new ModelAndView("redirect:/?verified");
   }
 
   @GetMapping("/need-confirm")

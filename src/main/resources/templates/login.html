@@ -7,7 +7,7 @@
 <header th:replace="fragments/common :: header"></header>
 <main class="container">
   <h1 class="mb-3">Log in</h1>
-  <p th:if="${param.confirmed}" class="alert alert-success alert-dismissible">
+  <p th:if="${param.verified}" class="alert alert-success alert-dismissible">
     Thank you for confirming your account. You may log in now.
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </p>

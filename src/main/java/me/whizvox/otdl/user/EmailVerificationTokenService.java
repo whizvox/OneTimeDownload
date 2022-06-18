@@ -9,27 +9,31 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class ConfirmationTokenService {
+public class EmailVerificationTokenService {
 
-  private final ConfirmationTokenRepository repo;
+  private final EmailVerificationTokenRepository repo;
 
   @Autowired
-  public ConfirmationTokenService(ConfirmationTokenRepository repo) {
+  public EmailVerificationTokenService(EmailVerificationTokenRepository repo) {
     this.repo = repo;
   }
 
-  public Optional<ConfirmationToken> getTokenInfo(String token) {
+  public Optional<EmailVerificationToken> getTokenInfo(String token) {
     return repo.findByToken(token);
   }
 
-  public void store(ConfirmationToken token) {
+  public void store(EmailVerificationToken token) {
     repo.save(token);
     log.info("Saving confirmation token {}", token.getId());
   }
 
   public void delete(UUID id) {
     repo.deleteById(id);
-    log.info("Confirmation token {} deleted", id);
+    log.info("Email verification token {} deleted", id);
+  }
+
+  public void deleteAllByUser(UUID userId) {
+    repo.deleteAllByUser(userId);
   }
 
 }
