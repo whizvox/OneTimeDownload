@@ -85,7 +85,11 @@ $(document).ready(function() {
             row.append($('<td>').text(user.id));
             row.append($('<td>').text(user.email));
             row.append($('<td>').text(user.role));
-            row.append($('<td>').text(user.enabled ? 'Yes' : 'No'));
+            let createdElem = $('<td>');
+            createdElem.text(user.created);
+            createdElem.attr('title', new Date(user.created));
+            row.append(createdElem);
+            row.append($('<td>').text(user.verified ? 'Yes' : 'No'));
             tableBody.append(row);
           });
           showElement(resultsArea);
