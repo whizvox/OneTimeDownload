@@ -50,6 +50,8 @@ import java.util.Optional;
 @RequestMapping("files")
 public class FileController {
 
+  // FIXME Transfer logic to service
+
   private static final Logger LOG = LoggerFactory.getLogger(FileController.class);
 
   private FileService files;
@@ -63,6 +65,7 @@ public class FileController {
     this.config = config;
   }
 
+  // FIXME Should probably get rid of base64 encryption. Doesn't do much good.
   private static char[] decodePassword(String password) {
     CharBuffer pwdBuffer;
     try {
@@ -164,6 +167,7 @@ public class FileController {
   public ResponseEntity<Object> upload(@RequestParam(required = false) MultipartFile file,
                                        @RequestParam(required = false) String password,
                                        @RequestParam(defaultValue = "30") int lifespan,
+                                       @RequestParam(defaultValue = "15") int lifespanAfterAccess,
                                        @AuthenticationPrincipal User user) {
     if (user != null) {
       if (user.getRole() == UserRole.RESTRICTED) {
@@ -183,14 +187,17 @@ public class FileController {
     if (lifespan > maxLifespan || lifespan < 1) {
       return ApiResponse.badRequest("Bad lifespan (%d): min 1, max %d minutes".formatted(lifespan, maxLifespan));
     }
+    long maxLifespanAfterAccess = config.getMaxLifespanAfterAccess(user);
+    if (lifespanAfterAccess < config.getMinLifespanAfterAccess() || lifespanAfterAccess > maxLifespanAfterAccess) {
+      return ApiResponse.badRequest("Bad expiration time (%d): min %d, max %d minutes".formatted(lifespanAfterAccess, config.getMinLifespanAfterAccess(), maxLifespanAfterAccess));
+    }
     if (file.getSize() > maxFileSize) {
       return ApiResponse.badRequest("Bad file size (%d): max %d bytes".formatted(file.getSize(), maxFileSize));
     }
-
     char[] pwdArr = decodePassword(password);
     if (pwdArr != null) {
       try {
-        return ApiResponse.ok(new PublicFileInfo(files.upload(file, lifespan, pwdArr, user)));
+        return ApiResponse.ok(new PublicFileInfo(files.upload(file, lifespan, pwdArr, lifespanAfterAccess, user)));
       } catch (InvalidLifespanException | NoFileException e) {
         return ApiResponse.badRequest(e.getMessage());
       } catch (Exception e) {

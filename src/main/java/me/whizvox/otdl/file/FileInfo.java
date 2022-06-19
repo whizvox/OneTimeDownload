@@ -8,6 +8,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "files")
 @Getter @Setter
 public class FileInfo {
 
@@ -29,6 +30,8 @@ public class FileInfo {
   private long storedSize;
 
   private LocalDateTime expires;
+
+  private int lifespanAfterAccess;
 
   private boolean downloaded;
 

@@ -23,7 +23,15 @@ public class FileConfiguration {
 
   private long maxFileSizeContributor = 2000000000;
 
-  private long lifespanAfterAccess = 15;
+  private long lifespanAfterAccessGuest = 15;
+
+  private long minLifespanAfterAccess = 5;
+
+  // 2 hours
+  private long maxLifespanAfterAccessContributor = 120;
+
+  // 24 hours
+  private long maxLifespanAfterAccessAdmin = 1440;
 
   public int getMaxLifespan(User user) {
     if (user == null) {
@@ -48,6 +56,18 @@ public class FileConfiguration {
       case MEMBER -> maxFileSizeMember;
       case CONTRIBUTOR -> maxFileSizeContributor;
       case ADMIN -> Long.MAX_VALUE;
+    };
+  }
+
+  public long getMaxLifespanAfterAccess(User user) {
+    if (user == null) {
+      return lifespanAfterAccessGuest;
+    }
+    return switch (user.getRole()) {
+      case RESTRICTED -> 0;
+      case GUEST, MEMBER -> lifespanAfterAccessGuest;
+      case CONTRIBUTOR -> maxLifespanAfterAccessContributor;
+      case ADMIN -> maxLifespanAfterAccessAdmin;
     };
   }
 

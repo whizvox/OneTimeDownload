@@ -4,9 +4,7 @@
 <body>
 <header th:replace="fragments/common :: header"></header>
 <main class="container">
-  <div id="upload-alert" class="mb-3 alert" hidden>
-    Could not upload file: <span id="upload-alert-code" class="fw-bold"></span> <span id="upload-alert-message" class="fst-italic"></span>
-  </div>
+  <div id="upload-alert" class="mb-3 alert" hidden></div>
   <div class="alert alert-secondary alert-dismissible" th:if="${param.expired}">
     Email verification token expired.
   </div>
@@ -42,6 +40,12 @@
       <input type="range" id="lifespan" name="lifespan" min="1" max="14400" value="30" class="form-range" th:if="${user.role.toString() == 'CONTRIBUTOR'}">
       <span id="lifespan-value" th:if="${user.role.toString() == 'MEMBER'}"></span>
       <input type="number" id="lifespan" name="lifespan" min="1" value="30" class="form-control" th:if="${user.role.toString() == 'ADMIN'}">
+    </div>
+    <div class="mb-3" th:if="${user != null && !user.isGuest() && user.isVerified() && (user.role.toString() == 'CONTRIBUTOR' || user.role.toString() == 'ADMIN')}">
+      <label for="lifespan-after-access">Lifespan after download (minutes)</label>
+      <input type="range" id="lifespan-after-access" name="lifespanAfterAccess" min="5" value="15" max="120" class="form-range" th:if="${user.role.toString() == 'CONTRIBUTOR'}">
+      <input type="range" id="lifespan-after-access" name="lifespanAfterAccess" min="5" value="15" max="1440" class="form-range" th:if="${user.role.toString() == 'ADMIN'}">
+      <span id="lifespan-after-access-value"></span>
     </div>
     <div class="mb-3">
       <button type="submit" class="btn btn-info text-white">Upload</button>

@@ -9,8 +9,6 @@ import me.whizvox.otdl.storage.StorageException;
 import me.whizvox.otdl.storage.StorageService;
 import me.whizvox.otdl.user.User;
 import me.whizvox.otdl.util.EncryptedResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -96,11 +94,12 @@ public class FileService {
    * @param file The file to be uploaded
    * @param lifespan How long the file will be kept in the file system in minutes
    * @param password The password used to encrypt the file
+   * @param lifespanAfterAccess How long the file is kept in storage after it is downloaded (in minutes)
    * @param user The user to be attributed as the file's owner
    * @return An {@link FileInfo} instance
    * @throws IOException Writing to the output file is unsuccessful in some way
    */
-  public FileInfo upload(MultipartFile file, int lifespan, char[] password, @Nullable User user) throws IOException {
+  public FileInfo upload(MultipartFile file, int lifespan, char[] password, int lifespanAfterAccess, @Nullable User user) throws IOException {
     if (file == null) {
       throw new NoFileException();
     }
@@ -139,6 +138,7 @@ public class FileService {
     info.setAuthToken(security.getAuthTokenCodec().encodeToString(security.generateAuthToken(password, salt)));
     info.setUploaded(LocalDateTime.now());
     info.setExpires(info.getUploaded().plusMinutes(lifespan));
+    info.setLifespanAfterAccess(lifespanAfterAccess);
     info.setDownloaded(false);
     if (user != null) {
       info.setUser(user);
@@ -172,7 +172,7 @@ public class FileService {
       }
       if (markForDeletion) {
         info.setDownloaded(true);
-        info.setExpires(LocalDateTime.now().plusMinutes(config.getLifespanAfterAccess()));
+        info.setExpires(LocalDateTime.now().plusMinutes(info.getLifespanAfterAccess()));
         repo.save(info);
       }
       return new EncryptedResource(storage.openStream(info.getId()), security.createCipher(false, password, token.getSalt()), info.getFileName(), info.getOriginalSize());
