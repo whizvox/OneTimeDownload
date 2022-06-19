@@ -167,7 +167,8 @@ function showErrorAlert(alertElem, warning, xhr) {
       if (typeof(res.data) !== 'object') {
         errorBody = res.data;
       } else {
-        errorBody = JSON.stringify(res.data);
+        // pretty print
+        errorBody = JSON.stringify(res.data, null, 2);
       }
     } else if (res.hasOwnProperty('timestamp') && res.hasOwnProperty('trace')) {
       // FIXME Change default Spring error response to something less revealing (no stacktrace)
@@ -202,12 +203,11 @@ $(document).ready(function() {
       url: '/logout',
       type: 'post',
       headers: getCSRFHeader(),
-      success: function(data, status, xhr) {
-        if (xhr.status === 200) {
-          location.reload();
-        } else {
-          console.log(data);
-        }
+      success: function() {
+        location.reload();
+      },
+      error: function(xhr) {
+        console.log(xhr);
       }
     });
   })

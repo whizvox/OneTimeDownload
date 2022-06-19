@@ -20,6 +20,17 @@ $(document).ready(function() {
   const btnRefreshFiles = $('#btn-refresh-files');
   const filesTable = $('#table-files');
 
+  const btnChangePassword = $('#btn-change-password');
+  const formChangePassword = $('#form-change-password');
+  const alertChangePassword = $('#alert-change-password');
+  const field_changePassword_newPassword = $('#new-password');
+  const field_changePassword_confirmPassword = $('#confirm-new-password');
+  const field_changePassword_currentPassword = $('#password-change-password');
+  const feedback_changePassword_invalid = $('#feedback-chgpass-invalid');
+  const feedback_changePassword_mismatch = $('#feedback-chgpass-mismatch');
+  const feedback_changePassword_wrong = $('#feedback-chgpass-wrong');
+  const btnChangePasswordApply = $('#btn-change-password-apply');
+
   const btnDeactivate = $('#btn-deactivate-account');
   const alertDeactivate = $('#alert-deactivate');
   const passwordFieldDeactivate = $('#deactivate-password');
@@ -194,6 +205,93 @@ $(document).ready(function() {
     });
   });
 
+  function updateChangePasswordSubmitButton() {
+    let isValid = field_changePassword_newPassword.is(':valid') &&
+        field_changePassword_confirmPassword.val() === field_changePassword_newPassword.val();
+    if (isValid) {
+      enableElement(btnChangePasswordApply);
+    } else {
+      disableElement(btnChangePasswordApply);
+    }
+  }
+
+  btnChangePassword.click(function() {
+    hideElement(alertChangePassword);
+    formChangePassword[0].reset();
+    hideElement(formChangePassword.find('.invalid-feedback'));
+    formChangePassword.find('input').removeClass('invalid-feedback');
+    updateChangePasswordSubmitButton();
+  });
+
+  field_changePassword_newPassword.on('input', function() {
+    if (field_changePassword_newPassword.val() === field_changePassword_confirmPassword.val()) {
+      hideElement(feedback_changePassword_mismatch);
+      field_changePassword_confirmPassword.removeClass('is-invalid');
+    } else {
+      showElement(feedback_changePassword_mismatch);
+      field_changePassword_confirmPassword.addClass('is-invalid');
+    }
+    if ($(this).is(':valid')) {
+      hideElement(feedback_changePassword_invalid);
+      $(this).removeClass('is-invalid');
+    } else {
+      showElement(feedback_changePassword_invalid);
+      $(this).addClass('is-invalid');
+    }
+    updateChangePasswordSubmitButton();
+  });
+
+  field_changePassword_confirmPassword.on('input', function() {
+    if (field_changePassword_newPassword.val() === field_changePassword_confirmPassword.val()) {
+      hideElement(feedback_changePassword_mismatch);
+      field_changePassword_confirmPassword.removeClass('is-invalid');
+    } else {
+      showElement(feedback_changePassword_mismatch);
+      field_changePassword_confirmPassword.addClass('is-invalid');
+    }
+    updateChangePasswordSubmitButton();
+  });
+
+  formChangePassword.submit(function(event) {
+    event.preventDefault();
+    disableElement(btnChangePasswordApply);
+    btnChangePasswordApply.text("Applying...");
+    hideElement(alertChangePassword);
+    hideElement(formChangePassword.find('.invalid-feedback'));
+    formChangePassword.find('input').removeClass('invalid-feedback');
+    $.ajax({
+      url: '/users/self/password',
+      type: 'put',
+      data: new FormData($(this)[0]),
+      headers: getCSRFHeader(),
+      processData: false,
+      contentType: false,
+      cache: false,
+      success: function(res) {
+        $.ajax({
+          url: '/logout',
+          type: 'post',
+          headers: getCSRFHeader(),
+          success: function () {
+            $(location).attr('href', "/login?reset");
+          }
+        })
+      },
+      error: function(xhr) {
+        if (xhr.status === 403) {
+          field_changePassword_currentPassword.addClass('is-invalid');
+          showElement(feedback_changePassword_wrong);
+        } else {
+          showErrorAlert(alertChangePassword, false, xhr);
+        }
+      },
+      complete: function() {
+        enableElement(btnChangePasswordApply);
+        btnChangePasswordApply.text("Apply changes");
+      }
+    });
+  });
+
   btnRefreshFiles.click(function() {
     disableElement($(this));
     disableElement(btnViewFiles);
@@ -250,12 +348,8 @@ $(document).ready(function() {
             url: '/logout',
             type: 'post',
             headers: getCSRFHeader(),
-            success: function (xhr) {
-              if (xhr.status === 200) {
-                $(location).attr('href', "/");
-              } else {
-                showErrorAlert(alertDeactivate, false, xhr);
-              }
+            success: function () {
+              $(location).attr('href', "/");
             }
           });
         }

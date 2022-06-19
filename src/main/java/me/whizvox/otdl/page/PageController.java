@@ -131,6 +131,8 @@ public class PageController {
     }
     return new ModelAndView("profile")
         .addObject("page", createStandardPage("View profile", "/profile"))
+        .addObject("passwordRegex", props.getPasswordRequirementRegex())
+        .addObject("passwordRequirements", props.getPasswordRequirementDescription())
         .addObject("user", user);
   }
 
