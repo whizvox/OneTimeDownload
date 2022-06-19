@@ -32,7 +32,7 @@ public class PasswordResetTokenService {
   }
 
   public PasswordResetToken create(User user) {
-    deleteByUser(user.getId());
+    deleteAllByUser(user.getId());
     return repo.save(PasswordResetToken.create(user, LocalDateTime.now().plusMinutes(props.getPasswordResetLinkLifetime())));
   }
 
@@ -40,8 +40,8 @@ public class PasswordResetTokenService {
     repo.deleteById(tokenId);
   }
 
-  public void deleteByUser(UUID userId) {
-    repo.deleteAll(repo.findAllForUser(userId));
+  public void deleteAllByUser(UUID userId) {
+    repo.deleteAllByUser(userId);
   }
 
   public int deleteAllExpired() {

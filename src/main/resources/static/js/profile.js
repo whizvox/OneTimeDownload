@@ -20,6 +20,13 @@ $(document).ready(function() {
   const btnRefreshFiles = $('#btn-refresh-files');
   const filesTable = $('#table-files');
 
+  const btnDeactivate = $('#btn-deactivate-account');
+  const alertDeactivate = $('#alert-deactivate');
+  const passwordFieldDeactivate = $('#deactivate-password');
+  const wrongPasswordDeactivate = $('#feedback-deactivate-wrong-password');
+  const formDeactivate = $('#form-deactivate');
+  const btnDeactivateApply = $('#btn-deactivate-apply');
+
   // update account creation timestamp to JS's default date format
   accountCreationTimestamp.text(new Date(accountCreationTimestamp.text()));
 
@@ -216,6 +223,56 @@ $(document).ready(function() {
       showElement(btnRefreshFiles);
       btnRefreshFiles.click();
     }
+  });
+
+  btnDeactivate.click(function() {
+    hideElement(alertDeactivate);
+    formDeactivate[0].reset();
+    hideElement(formDeactivate.find('.invalid-feedback'));
+    formDeactivate.find('input').removeClass('is-invalid');
+  });
+
+  btnDeactivateApply.click(function(event) {
+    event.preventDefault();
+    disableElement(btnDeactivateApply);
+    btnDeactivateApply.text("Deactivating...");
+    $.ajax({
+      url: '/users/self/deactivate',
+      type: 'post',
+      data: new FormData(formDeactivate[0]),
+      headers: getCSRFHeader(),
+      processData: false,
+      contentType: false,
+      cache: false,
+      success: function(data) {
+        if (data.data) {
+          $.ajax({
+            url: '/logout',
+            type: 'post',
+            headers: getCSRFHeader(),
+            success: function (xhr) {
+              if (xhr.status === 200) {
+                $(location).attr('href', "/");
+              } else {
+                showErrorAlert(alertDeactivate, false, xhr);
+              }
+            }
+          });
+        }
+      },
+      error: function(xhr) {
+        if (xhr.status === 400) {
+          passwordFieldDeactivate.addClass('is-invalid');
+          showElement(wrongPasswordDeactivate);
+        } else {
+          showErrorAlert(alertDeactivate, false, xhr);
+        }
+      },
+      complete: function() {
+        btnDeactivateApply.text("DEACTIVATE");
+        enableElement(btnDeactivateApply);
+      }
+    });
   });
 
 });

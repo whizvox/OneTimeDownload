@@ -67,7 +67,7 @@
 
   <hr class="text-danger">
   <h1 class="text-danger mb-3">Danger zone</h1>
-  <button type="button" id="btn-deactivate-account" class="btn btn-danger">DEACTIVATE ACCOUNT</button>
+  <button type="button" id="btn-deactivate-account" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modal-deactivate-account">DEACTIVATE ACCOUNT</button>
 
   <div id="modal-change-email" class="modal fade" tabindex="-1" aria-labelledby="modaltitle-change-email" data-bs-backdrop="static">
     <div class="modal-dialog">
@@ -101,6 +101,32 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="submit" id="btn-apply-change-email" form="form-change-email" class="btn btn-primary" disabled>Apply changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-deactivate-account" class="modal fade" tabindex="-1" aria-labelledby="" data-bs-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Deactivate account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="alert-deactivate" class="alert" hidden></div>
+          <form id="form-deactivate">
+            <p class="text-danger fw-bold">This will permanently delete your account! It is not recoverable!</p>
+            <div class="mb-3 form-floating">
+              <input type="password" id="deactivate-password" name="password" class="form-control">
+              <label for="deactivate-password">Password</label>
+              <div id="feedback-deactivate-wrong-password" class="invalid-feedback" hidden>Incorrect password</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" id="btn-deactivate-apply" form="form-deactivate" class="btn btn-danger">DEACTIVATE</button>
         </div>
       </div>
     </div>

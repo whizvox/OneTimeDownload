@@ -1,5 +1,6 @@
 package me.whizvox.otdl.file;
 
+import lombok.extern.slf4j.Slf4j;
 import me.whizvox.otdl.exception.*;
 import me.whizvox.otdl.security.ComboAuthToken;
 import me.whizvox.otdl.security.SecurityService;
@@ -33,9 +34,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@Slf4j
 public class FileService {
-
-  private static final Logger LOG = LoggerFactory.getLogger(FileService.class);
 
   private static final int
       ID_LENGTH = 12;
@@ -203,7 +203,7 @@ public class FileService {
         try {
           storage.delete(info.getId());
         } catch (StorageException e) {
-          LOG.error("Could not delete physical file " + info.getId(), e);
+          log.error("Could not delete physical file " + info.getId(), e);
         }
       }
       repo.deleteAll(expiredFiles);
@@ -212,15 +212,22 @@ public class FileService {
     return 0;
   }
 
-  public Page<FileInfo> search(Specification<FileInfo> spec, Pageable pageable) {
-    return repo.findAll(spec, pageable);
-  }
-
   public void update(FileInfo file) {
     if (!repo.existsById(file.getId())) {
       throw new UnknownIdException();
     }
     repo.save(file);
+  }
+
+  public void clearUser(UUID userId) {
+    int totalCount = repo.clearUser(userId);
+    if (totalCount > 0) {
+      log.info("Cleared user {} from {} file(s)", userId, totalCount);
+    }
+  }
+
+  public Page<FileInfo> search(Specification<FileInfo> spec, Pageable pageable) {
+    return repo.findAll(spec, pageable);
   }
 
   public Page<FileInfo> getFilesUploadedByUser(UUID userId, Pageable pageable) {

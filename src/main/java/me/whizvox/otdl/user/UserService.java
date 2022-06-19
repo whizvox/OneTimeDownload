@@ -2,6 +2,7 @@ package me.whizvox.otdl.user;
 
 import lombok.extern.slf4j.Slf4j;
 import me.whizvox.otdl.exception.*;
+import me.whizvox.otdl.file.FileService;
 import me.whizvox.otdl.misc.EmptyJavaMailSender;
 import me.whizvox.otdl.util.StringUtils;
 import me.whizvox.otdl.util.params.Parameters;
@@ -32,8 +33,9 @@ import java.util.stream.StreamSupport;
 public class UserService implements UserDetailsService {
 
   private final UserRepository repo;
-  private final EmailVerificationTokenService tokens;
+  private final EmailVerificationTokenService emailVerificationTokens;
   private final PasswordResetTokenService passwordResetTokens;
+  private final FileService files;
   private final PasswordEncoder encoder;
   private final JavaMailSender emailSender;
   private final UserConfigurationProperties config;
@@ -43,14 +45,16 @@ public class UserService implements UserDetailsService {
 
   @Autowired
   public UserService(UserRepository repo,
-                     EmailVerificationTokenService tokens,
+                     EmailVerificationTokenService emailVerificationTokens,
                      PasswordResetTokenService passwordResetTokens,
+                     FileService files,
                      PasswordEncoder encoder,
                      JavaMailSender emailSender,
                      UserConfigurationProperties config) {
     this.repo = repo;
-    this.tokens = tokens;
+    this.emailVerificationTokens = emailVerificationTokens;
     this.passwordResetTokens = passwordResetTokens;
+    this.files = files;
     this.encoder = encoder;
     this.emailSender = emailSender;
     this.config = config;
@@ -104,9 +108,9 @@ public class UserService implements UserDetailsService {
   }
 
   public void sendVerificationEmail(User user) {
-    tokens.deleteAllByUser(user.getId());
+    emailVerificationTokens.deleteAllByUser(user.getId());
     EmailVerificationToken token = new EmailVerificationToken(user);
-    tokens.store(token);
+    emailVerificationTokens.store(token);
     SimpleMailMessage msg = new SimpleMailMessage();
     msg.setTo(user.getEmail());
     msg.setFrom(config.getEmailFromAddress());
@@ -125,7 +129,7 @@ public class UserService implements UserDetailsService {
   }
 
   public void confirmUser(String token) {
-    Optional<EmailVerificationToken> infoOp = tokens.getTokenInfo(token);
+    Optional<EmailVerificationToken> infoOp = emailVerificationTokens.getTokenInfo(token);
     if (infoOp.isEmpty()) {
       throw new TokenDoesNotExistException();
     }
@@ -134,7 +138,7 @@ public class UserService implements UserDetailsService {
     user.setVerified(true);
     repo.save(user);
     log.info("User {} has confirmed their email", user.getId());
-    tokens.delete(info.getId());
+    emailVerificationTokens.delete(info.getId());
   }
 
   public boolean updateEmail(User user, String newEmail, CharSequence currentPassword, boolean sendVerificationLink) {
@@ -180,6 +184,9 @@ public class UserService implements UserDetailsService {
       if (!encoder.matches(password, user.getPassword())) {
         throw new WrongPasswordException();
       }
+      emailVerificationTokens.deleteAllByUser(id);
+      passwordResetTokens.deleteAllByUser(id);
+      files.clearUser(id);
       repo.delete(user);
       return true;
     }).orElse(false);

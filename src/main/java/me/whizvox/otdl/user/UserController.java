@@ -146,7 +146,7 @@ public class UserController {
     }
   }
 
-  @DeleteMapping("self")
+  @PostMapping("self/deactivate")
   public ResponseEntity<Object> deactivate(
       @RequestParam CharSequence password,
       @AuthenticationPrincipal User user) {
