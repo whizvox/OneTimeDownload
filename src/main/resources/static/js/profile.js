@@ -15,6 +15,10 @@ $(document).ready(function() {
   const feedback_changeEmail_wrongPassword = $('#feedback-change-email-wrong-password');
   const btnApplyChangeEmail = $('#btn-apply-change-email');
   const btnSendVerificationEmail = $('#btn-send-verification-email');
+  const filesAlert = $('#files-alert');
+  const btnViewFiles = $('#btn-view-files');
+  const btnRefreshFiles = $('#btn-refresh-files');
+  const filesTable = $('#table-files');
 
   // update account creation timestamp to JS's default date format
   accountCreationTimestamp.text(new Date(accountCreationTimestamp.text()));
@@ -38,6 +42,46 @@ $(document).ready(function() {
     } else {
       disableElement(btnApplyChangeEmail);
     }
+  }
+
+  function refreshFilesTable(onCompleteFunc = undefined) {
+    filesTable.find('tbody').remove();
+    let tableBody = filesTable.append('<tbody>');
+    $.ajax({
+      url: '/files/all',
+      type: 'get',
+      headers: getCSRFHeader(),
+      contentType: false,
+      cache: false,
+      success: function(res) {
+        let files = res.data.items;
+        if (files.length === 0) {
+          showAlert(filesAlert, 'secondary', "No files found. Try uploading some!");
+        } else {
+          files.forEach(file => {
+            let row = $('<tr>');
+            row.append($('<td>').text(file.id));
+            row.append($('<td>').text(file.fileName));
+            let uploadDate = new Date(file.uploaded);
+            row.append($('<td>').text(formatRelativeTime(uploadDate)).attr('title', uploadDate));
+            row.append($('<td>').text(formatDigitalLength(file.originalSize)).attr('title', file.originalSize.toLocaleString() + " B"));
+            let expireDate = new Date(file.expires);
+            row.append($('<td>').text(formatRelativeTime(expireDate)).attr('title', expireDate));
+            row.append($('<td>').text(file.downloaded ? 'Yes' : 'No'));
+            tableBody.append(row);
+          });
+          showElement(filesTable);
+        }
+      },
+      error: function(xhr) {
+        showErrorAlert(filesAlert, false, xhr);
+      },
+      complete: function() {
+        if (onCompleteFunc !== undefined) {
+          onCompleteFunc();
+        }
+      }
+    });
   }
 
   inputChangeEmail_email.on('input', function() {
@@ -141,6 +185,37 @@ $(document).ready(function() {
         btnSendVerificationEmail.text("Resend verification email");
       }
     });
+  });
+
+  btnRefreshFiles.click(function() {
+    disableElement($(this));
+    disableElement(btnViewFiles);
+    hideElement(filesAlert);
+    hideElement(filesTable);
+    $(this).text("Refreshing...");
+    refreshFilesTable(function() {
+      enableElement(btnRefreshFiles);
+      enableElement(btnViewFiles);
+      btnRefreshFiles.text("Refresh");
+    });
+  });
+
+  btnViewFiles.click(function() {
+    if ($(this).hasClass('btn-secondary')) {
+      // hide files
+      btnViewFiles.removeClass('btn-secondary');
+      btnViewFiles.addClass('btn-info');
+      btnViewFiles.text("Show files");
+      hideElement(btnRefreshFiles);
+      hideElement(filesTable);
+    } else {
+      // show and refresh files list
+      btnViewFiles.removeClass('btn-info');
+      btnViewFiles.addClass('btn-secondary');
+      btnViewFiles.text("Hide files");
+      showElement(btnRefreshFiles);
+      btnRefreshFiles.click();
+    }
   });
 
 });

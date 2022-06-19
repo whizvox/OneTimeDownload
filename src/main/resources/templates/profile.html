@@ -43,26 +43,28 @@
     </tr>
     </tbody>
   </table>
+
   <hr>
   <h1 class="mb-3">Files</h1>
-  <div class="alert alert-secondary">Waiting for server...</div>
-  <div class="alert alert-primary" hidden>No existing files found</div>
-  <div id="div-files" hidden>
-    <button type="button" id="btn-hide-files" class="btn btn-secondary">Hide files</button>
-    <table class="table table-striped table-dark">
-      <thead>
-      <tr>
-        <td>ID</td>
-        <td>File name</td>
-        <td>Uploaded</td>
-        <td>Size</td>
-        <td>Expires</td>
-        <td>Downloaded</td>
-      </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <div id="files-alert" class="alert" hidden></div>
+  <div class="mb-3">
+    <button type="button" id="btn-view-files" class="btn btn-info">Show files</button>
+    <button type="button" id="btn-refresh-files" class="btn btn-success" hidden>Refresh</button>
   </div>
+  <table id="table-files" class="table table-striped" hidden>
+    <thead>
+    <tr class="table-dark">
+      <td>ID</td>
+      <td>File name</td>
+      <td>Uploaded</td>
+      <td>Size</td>
+      <td>Expires</td>
+      <td>Downloaded</td>
+    </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
   <hr class="text-danger">
   <h1 class="text-danger mb-3">Danger zone</h1>
   <button type="button" id="btn-deactivate-account" class="btn btn-danger">DEACTIVATE ACCOUNT</button>

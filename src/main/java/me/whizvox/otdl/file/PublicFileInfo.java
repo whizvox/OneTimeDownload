@@ -10,6 +10,7 @@ public class PublicFileInfo {
 
   public PublicFileInfo(FileInfo info) {
     setId(info.getId());
+    setFileName(info.getFileName());
     setUploaded(info.getUploaded());
     setOriginalSize(info.getOriginalSize());
     setExpires(info.getExpires());
@@ -17,6 +18,8 @@ public class PublicFileInfo {
   }
 
   private String id;
+
+  private String fileName;
 
   private LocalDateTime uploaded;
 
