@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html th:insert="fragments/standard_page :: page(~{ :: .main-content})">
+<main class="container main-content">
+  <h1 class="mb-3">About</h1>
+  <div>
+    <p>Welcome to the public website for One-Time Download! If you want to share a password-encrypted file with zero
+      concerns of it being kept archived, intercepted, or from being discovered by any unauthorized parties, including
+      the admins, this is the way to do it.</p>
+  </div>
+  <hr>
+  <h2>How it Works -- Uploading a File</h2>
+  <div class="d-flex p-2">
+    <img src="/img/file-upload-diagram.svg" alt="Diagram of a file upload">
+    <div class="p-2">
+      <ol>
+        <li>You send both the file you want to upload and the password that will be used to encrypt it.</li>
+        <li>An alphanumeric code (the file ID) is securely generated that corresponds with your file.</li>
+        <li>The file is encrypted using the password you specified.</li>
+        <li>The password is hashed.</li>
+        <li>The file ID, encrypted file, and hashed password are stored in a database.</li>
+        <li>The file ID is sent back to you.</li>
+      </ol>
+    </div>
+  </div>
+  <hr>
+  <h2>How it Works -- Downloading a File</h2>
+  <div class="d-flex p-2">
+    <img src="/img/file-download-diagram.svg" alt="Diagram of a file download">
+    <div class="p-2">
+      <ol>
+        <li>You submit a request to download a file with file ID and a password attempt.</li>
+        <li>The file ID is used to find both the hashed password and the encrypted file.</li>
+        <li>Your password attempt is hashed using the same algorithm.</li>
+        <li>Check if the hashed password attempt matches the stored hashed password. If it does...</li>
+        <li>Decrypt the encrypted file using your unhashed password attempt.</li>
+        <li>Send the file back to you.</li>
+      </ol>
+      Some other things not mentioned in this diagram:
+      <ul>
+        <li>Once it has been confirmed that the password attempt matches, then the file is marked as "downloaded", and
+          any further attempts to download it will fail.</li>
+        <li>A couple of checksums are also created when uploading the file. If these checksums do not match when
+          downloading, then the process will fail.</li>
+      </ul>
+    </div>
+  </div>
+  <hr>
+  <div>
+    <h2>Disclaimers</h2>
+    <p>It is impossible for:</p>
+    <ul>
+      <li>The original file's contents to be stored on the server</li>
+      <li>An admin to view the contents of your original files</li>
+      <li>An admin to view the password used to encrypt a file</li>
+      <li>An admin to change a file's contents or a file's encryption password</li>
+      <li>An admin to view your account's password</li>
+    </ul>
+    <p>However note that it <i>is</i> possible for:</p>
+    <ul>
+      <li>An unwanted third party to use the link and password if details were exchanged in and leaked from a messaging service like IRC or Discord</li>
+      <li>An admin to modify certain properties of a file: file name, expiration time, and whether it was downloaded</li>
+      <li>An admin to delete a file</li>
+      <li>An admin to modify certain properties of a user's account: email address, verification status, password, and role</li>
+      <li>An admin to delete a user's account</li>
+    </ul>
+    <p>All of the following are stored when uploading a file:</p>
+    <ul>
+      <li>The original file's name</li>
+      <li>The original file's size</li>
+      <li>An MD5 and SHA1 checksum of the original file's contents</li>
+      <li>A hash of the password used to encrypt the file</li>
+      <li>The timestamp of when the file was uploaded</li>
+      <li>The user ID of whomever uploaded the file (if logged in)</li>
+    </ul>
+    <p>All of the following are stored when creating an account on this site:</p>
+    <ul>
+      <li>Your email address</li>
+      <li>A hash of your account's password</li>
+      <li>A timestamp of when you created your account</li>
+    </ul>
+  </div>
+</main>
+</html>

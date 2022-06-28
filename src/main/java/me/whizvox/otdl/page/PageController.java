@@ -154,16 +154,16 @@ public class PageController {
         .addObject("page", createStandardPage("Forgot password", "/forgot-password"));
   }
 
-  /*@GetMapping("contact")
+  @GetMapping("contact")
   public ModelAndView contact() {
     return new ModelAndView("contact")
         .addObject("page", createStandardPage("Contact", "/contact"));
-  }*/
+  }
 
-  /*@GetMapping("about")
+  @GetMapping("about")
   public ModelAndView about() {
     return new ModelAndView("about")
         .addObject("page", createStandardPage("About", "/about"));
-  }*/
+  }
 
 }
