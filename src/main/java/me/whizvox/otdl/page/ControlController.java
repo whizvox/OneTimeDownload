@@ -22,28 +22,22 @@ public class ControlController {
 
   @GetMapping
   public ModelAndView index(@AuthenticationPrincipal User user) {
-    return new ModelAndView("control")
-        .addObject("page", utils.createStandardPage("Control panel", "/control", user));
+    return utils.withUser("control", "Control panel", "/control", user);
   }
 
   @GetMapping("files")
   public ModelAndView files(@AuthenticationPrincipal User user) {
-    return new ModelAndView("control_files")
-        .addObject("page", utils.createStandardPage("Control files", "/control/files", user));
+    return utils.withUser("control_files", "Control files", "/control/files", user);
   }
 
   @GetMapping("users")
   public ModelAndView users(@AuthenticationPrincipal User user) {
-    return new ModelAndView("control_users")
-        .addObject("page", utils.createStandardPage("Control users", "/control/users", user))
-        .addObject("user", user);
+    return utils.withUser("control_users", "Control users", "/control/users", user);
   }
 
   @GetMapping("users/create")
   public ModelAndView createUser(@AuthenticationPrincipal User user) {
-    return new ModelAndView("control_create_user")
-        .addObject("page", utils.createStandardPage("Create new user", "/control/users/create", user))
-        .addObject("user", user);
+    return utils.withUser("control_create_user", "Create new user", "/control/users/create", user);
   }
 
 }
