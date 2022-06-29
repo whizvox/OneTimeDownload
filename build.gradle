@@ -4,8 +4,8 @@ plugins {
   id 'java'
 }
 
-group = 'me.whizvox'
-version = '0.0.1-SNAPSHOT'
+group = 'me.whizvox.otdl'
+version = '0.1'
 sourceCompatibility = '17'
 
 configurations {
