@@ -1,5 +1,11 @@
 <!DOCTYPE html>
-<html th:insert="fragments/standard_page :: page(~{ :: .main-content})">
+<html lang="en" th:lang="${page.lang}">
+<head th:replace="fragments/common :: head">
+  <meta charset="UTF-8">
+  <title>About</title>
+</head>
+<body>
+<header th:replace="fragments/common :: header"></header>
 <main class="container main-content">
   <h1 class="mb-3">About</h1>
   <div>
@@ -92,4 +98,6 @@
     </div>
   </div>
 </main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
 </html>

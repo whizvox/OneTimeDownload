@@ -1,4 +1,11 @@
-<html th:insert="fragments/standard_page :: page(~{ :: .main-content})">
+<!DOCTYPE html>
+<html lang="en" th:lang="${page.lang}">
+<head th:replace="fragments/common :: head">
+  <meta charset="UTF-8">
+  <title>View profile</title>
+</head>
+<body>
+<header th:replace="fragments/common :: header"></header>
 <main class="container main-content">
   <h1 class="mb-3">Account details</h1>
   <div class="alert" id="general-alert" hidden></div>
@@ -168,4 +175,6 @@
   </div>
   <script src="/js/profile.js"></script>
 </main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
 </html>

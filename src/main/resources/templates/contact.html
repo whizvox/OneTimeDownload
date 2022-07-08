@@ -1,5 +1,11 @@
 <!DOCTYPE html>
-<html th:insert="fragments/standard_page :: page(~{ :: .main-content})">
+<html lang="en" th:lang="${page.lang}">
+<head th:replace="fragments/common :: head">
+  <meta charset="UTF-8">
+  <title>Contact</title>
+</head>
+<body>
+<header th:replace="fragments/common :: header"></header>
 <main class="container main-content">
   <h1 class="mb-3">Contact Us</h1>
   <p>Want to submit an issue with the site? Want to suggest an enhancement or new feature? Submit an issue on the
@@ -7,4 +13,6 @@
   <p>Have an issue with your account? Want to report an issue discretely? Send an email to
     <a href="mailto:corneliuseanes@gmail.com">corneliuseanes@gmail.com</a> with the details.</p>
 </main>
+<footer th:replace="fragments/common :: footer"></footer>
+</body>
 </html>
