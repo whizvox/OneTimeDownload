@@ -101,7 +101,10 @@ function formatDuration(seconds) {
     }
     res += min + "m";
   }
-  if (sec > 0 || res.length === 0) {
+  if (sec > 0) {
+    if (res.length > 0) {
+      res += " ";
+    }
     res += sec + "s";
   }
   return res;

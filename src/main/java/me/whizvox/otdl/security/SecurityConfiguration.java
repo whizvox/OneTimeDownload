@@ -22,6 +22,4 @@ public class SecurityConfiguration {
 
   private boolean enableCsrf = true;
 
-  private boolean rememberMe = true;
-
 }

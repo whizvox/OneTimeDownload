@@ -313,6 +313,7 @@ $(document).ready(function() {
       btnViewFiles.text("Show files");
       hideElement(btnRefreshFiles);
       hideElement(filesTable);
+      hideElement(filesAlert);
     } else {
       // show and refresh files list
       btnViewFiles.removeClass('btn-info');
